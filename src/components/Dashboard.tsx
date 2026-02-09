@@ -1,14 +1,18 @@
 import { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { VenueList } from "./VenueList";
+import { VenueBoard } from "./VenueBoard";
+import { VenueView } from "./VenueView";
 import { VenueDetail } from "./VenueDetail";
+import { SlideOver } from "./SlideOver";
 import { Id } from "../../convex/_generated/dataModel";
+
+type Mode = "idle" | "viewing" | "editing" | "creating";
 
 export function Dashboard() {
   const venues = useQuery(api.venues.list);
   const [selectedVenueId, setSelectedVenueId] = useState<Id<"venues"> | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
+  const [mode, setMode] = useState<Mode>("idle");
 
   if (venues === undefined) {
     return (
@@ -20,49 +24,62 @@ export function Dashboard() {
 
   const handleCreateNew = () => {
     setSelectedVenueId(null);
-    setIsCreating(true);
+    setMode("creating");
   };
 
   const handleVenueSelect = (venueId: Id<"venues">) => {
     setSelectedVenueId(venueId);
-    setIsCreating(false);
+    setMode("viewing");
+  };
+
+  const handleEdit = () => {
+    setMode("editing");
+  };
+
+  const handleCloseSlideOver = () => {
+    setSelectedVenueId(null);
+    setMode("idle");
   };
 
   const handleCloseDetail = () => {
-    setSelectedVenueId(null);
-    setIsCreating(false);
+    if (mode === "editing" && selectedVenueId) {
+      // Return to viewing after save/cancel from edit
+      setMode("viewing");
+    } else {
+      // Creating -> go back to idle
+      setSelectedVenueId(null);
+      setMode("idle");
+    }
   };
 
-  return (
-    <div className="flex h-[calc(100vh-4rem)]">
-      {/* Left Panel - Venue List */}
-      <div className="w-1/3 border-r border-gray-200 bg-white">
-        <VenueList
-          venues={venues}
-          selectedVenueId={selectedVenueId}
-          onVenueSelect={handleVenueSelect}
-          onCreateNew={handleCreateNew}
-        />
-      </div>
+  const isSlideOverOpen = mode !== "idle";
 
-      {/* Right Panel - Venue Detail */}
-      <div className="flex-1 bg-gray-50">
-        {(selectedVenueId || isCreating) ? (
+  return (
+    <div className="h-[calc(100vh-4rem)]">
+      {/* Full-width board */}
+      <VenueBoard
+        venues={venues}
+        selectedVenueId={selectedVenueId}
+        onVenueSelect={handleVenueSelect}
+        onCreateNew={handleCreateNew}
+      />
+
+      {/* Slide-over drawer for detail / edit / create */}
+      <SlideOver isOpen={isSlideOverOpen} onClose={handleCloseSlideOver}>
+        {mode === "viewing" && selectedVenueId ? (
+          <VenueView
+            venueId={selectedVenueId}
+            onEdit={handleEdit}
+            onClose={handleCloseSlideOver}
+          />
+        ) : (mode === "editing" || mode === "creating") ? (
           <VenueDetail
             venueId={selectedVenueId}
-            isCreating={isCreating}
+            isCreating={mode === "creating"}
             onClose={handleCloseDetail}
           />
-        ) : (
-          <div className="flex items-center justify-center h-full text-gray-500">
-            <div className="text-center">
-              <div className="text-6xl mb-4">🎨</div>
-              <p className="text-lg">Select a venue to view details</p>
-              <p className="text-sm">or create a new one</p>
-            </div>
-          </div>
-        )}
-      </div>
+        ) : null}
+      </SlideOver>
     </div>
   );
 }

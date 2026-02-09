@@ -4,6 +4,7 @@ import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { X, Plus, Trash2, Save, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import { MarkdownEditor } from "./MarkdownEditor";
 
 interface VenueDetailProps {
   venueId: Id<"venues"> | null;
@@ -426,16 +427,11 @@ export function VenueDetail({ venueId, isCreating, onClose }: VenueDetailProps) 
         {/* Notes */}
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Notes</h3>
-          <textarea
-            value={formData.notes}
-            onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-            placeholder="Add your notes about this venue (supports markdown)"
-            rows={6}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          <MarkdownEditor
+            content={formData.notes}
+            onChange={(markdown) => setFormData(prev => ({ ...prev, notes: markdown }))}
+            placeholder="Add your notes about this venue..."
           />
-          <p className="text-xs text-gray-500 mt-2">
-            You can use markdown formatting in your notes
-          </p>
         </div>
       </div>
     </div>
