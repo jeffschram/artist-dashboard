@@ -41,7 +41,7 @@ export const create = mutation({
       email: v.optional(v.string()),
       notes: v.optional(v.string()),
     })),
-    status: v.union(v.literal("Contacted"), v.literal("To Contact"), v.literal("Ignore")),
+    status: v.union(v.literal("Contacted"), v.literal("To Contact"), v.literal("Ignore"), v.literal("Previous Client")),
     category: v.union(v.literal("Ultimate Dream Goal"), v.literal("Accessible"), v.literal("Unconventional")),
     notes: v.optional(v.string()),
   },
@@ -78,7 +78,7 @@ export const update = mutation({
       email: v.optional(v.string()),
       notes: v.optional(v.string()),
     })),
-    status: v.union(v.literal("Contacted"), v.literal("To Contact"), v.literal("Ignore")),
+    status: v.union(v.literal("Contacted"), v.literal("To Contact"), v.literal("Ignore"), v.literal("Previous Client")),
     category: v.union(v.literal("Ultimate Dream Goal"), v.literal("Accessible"), v.literal("Unconventional")),
     notes: v.optional(v.string()),
   },
@@ -175,5 +175,53 @@ export const reorder = mutation({
         await ctx.db.patch(v._id, { orderNum: v.orderNum + 1 });
       }
     }
+  },
+});
+
+/**
+ * One-time migration: copy inline venue contacts to the new contacts table.
+ * Idempotent — skips venues whose contacts have already been migrated
+ * (checks by name + email combo to avoid duplicates).
+ * Run: npx convex run venues:migrateContactsToTable
+ */
+export const migrateContactsToTable = mutation({
+  args: {},
+  returns: v.object({
+    migrated: v.number(),
+    skipped: v.number(),
+  }),
+  handler: async (ctx) => {
+    const venues = await ctx.db.query("venues").collect();
+    const existingContacts = await ctx.db.query("contacts").collect();
+    const existingKeys = new Set(
+      existingContacts.map((c) => `${c.venueId}::${c.name}::${c.email ?? ""}`)
+    );
+
+    let migrated = 0;
+    let skipped = 0;
+
+    for (const venue of venues) {
+      for (const inlineContact of venue.contacts) {
+        if (!inlineContact.name) {
+          skipped++;
+          continue;
+        }
+        const key = `${venue._id}::${inlineContact.name}::${inlineContact.email ?? ""}`;
+        if (existingKeys.has(key)) {
+          skipped++;
+          continue;
+        }
+        await ctx.db.insert("contacts", {
+          name: inlineContact.name,
+          email: inlineContact.email,
+          role: inlineContact.title,
+          notes: inlineContact.notes,
+          venueId: venue._id,
+        });
+        migrated++;
+      }
+    }
+
+    return { migrated, skipped };
   },
 });

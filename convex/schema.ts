@@ -14,17 +14,74 @@ const applicationTables = {
       country: v.optional(v.string()),
       phoneNumber: v.optional(v.string()),
     })),
+    // Legacy inline contacts — kept for backward compat; new contacts go to the contacts table
     contacts: v.array(v.object({
       name: v.optional(v.string()),
       title: v.optional(v.string()),
       email: v.optional(v.string()),
       notes: v.optional(v.string()),
     })),
-    status: v.union(v.literal("Contacted"), v.literal("To Contact"), v.literal("Ignore")),
-    category: v.union(v.literal("Ultimate Dream Goal"), v.literal("Accessible"), v.literal("Unconventional")),
+    status: v.union(
+      v.literal("Contacted"),
+      v.literal("To Contact"),
+      v.literal("Ignore"),
+      v.literal("Previous Client"),
+    ),
+    category: v.union(
+      v.literal("Ultimate Dream Goal"),
+      v.literal("Accessible"),
+      v.literal("Unconventional"),
+    ),
     notes: v.optional(v.string()),
   })
     .index("by_order", ["orderNum"]),
+
+  projects: defineTable({
+    name: v.string(),
+    venueId: v.id("venues"),
+    startDate: v.optional(v.string()),
+    endDate: v.optional(v.string()),
+    description: v.optional(v.string()),
+    status: v.union(
+      v.literal("Planning"),
+      v.literal("In Progress"),
+      v.literal("Completed"),
+      v.literal("Cancelled"),
+    ),
+    notes: v.optional(v.string()),
+    budget: v.optional(v.number()),
+    profit: v.optional(v.number()),
+  })
+    .index("by_venue", ["venueId"]),
+
+  collaborators: defineTable({
+    name: v.string(),
+    url: v.optional(v.string()),
+    email: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    role: v.optional(v.string()),
+    notes: v.optional(v.string()),
+  }),
+
+  // Join table: which collaborators worked on which projects
+  projectCollaborators: defineTable({
+    projectId: v.id("projects"),
+    collaboratorId: v.id("collaborators"),
+  })
+    .index("by_project", ["projectId"])
+    .index("by_collaborator", ["collaboratorId"]),
+
+  contacts: defineTable({
+    name: v.string(),
+    email: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    role: v.optional(v.string()),
+    notes: v.optional(v.string()),
+    venueId: v.optional(v.id("venues")),
+    collaboratorId: v.optional(v.id("collaborators")),
+  })
+    .index("by_venue", ["venueId"])
+    .index("by_collaborator", ["collaboratorId"]),
 };
 
 export default defineSchema({

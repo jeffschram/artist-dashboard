@@ -38,7 +38,7 @@ export function VenueDetail({ venueId, isCreating, onClose }: VenueDetailProps) 
     submissionFormUrl: "",
     locations: [{ city: "", state: "", country: "", phoneNumber: "" }] as Location[],
     contacts: [{ name: "", title: "", email: "", notes: "" }] as Contact[],
-    status: "To Contact" as "Contacted" | "To Contact" | "Ignore",
+    status: "To Contact" as "Contacted" | "To Contact" | "Ignore" | "Previous Client",
     category: "Accessible" as "Ultimate Dream Goal" | "Accessible" | "Unconventional",
     notes: "",
   });
@@ -228,6 +228,7 @@ export function VenueDetail({ venueId, isCreating, onClose }: VenueDetailProps) 
                 >
                   <option value="To Contact">To Contact</option>
                   <option value="Contacted">Contacted</option>
+                  <option value="Previous Client">Previous Client</option>
                   <option value="Ignore">Ignore</option>
                 </select>
               </div>

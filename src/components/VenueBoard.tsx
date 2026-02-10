@@ -31,12 +31,13 @@ const CATEGORY_COLUMNS: {
 ];
 
 const STATUS_COLUMNS: {
-  key: "To Contact" | "Contacted" | "Ignore";
+  key: "To Contact" | "Contacted" | "Ignore" | "Previous Client";
   title: string;
   accent: string;
 }[] = [
   { key: "To Contact", title: "To Contact", accent: "bg-yellow-500" },
   { key: "Contacted", title: "Contacted", accent: "bg-green-500" },
+  { key: "Previous Client", title: "Previous Client", accent: "bg-teal-500" },
   { key: "Ignore", title: "Ignore", accent: "bg-gray-400" },
 ];
 

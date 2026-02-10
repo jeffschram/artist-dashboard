@@ -7,7 +7,7 @@ import { Plus, GripVertical } from "lucide-react";
 interface Venue {
   _id: Id<"venues">;
   name: string;
-  status: "Contacted" | "To Contact" | "Ignore";
+  status: "Contacted" | "To Contact" | "Ignore" | "Previous Client";
   category: "Ultimate Dream Goal" | "Accessible" | "Unconventional";
   orderNum: number;
 }
@@ -30,6 +30,7 @@ export function VenueList({ venues, selectedVenueId, onVenueSelect, onCreateNew 
       case "Contacted": return "bg-green-100 text-green-800";
       case "To Contact": return "bg-yellow-100 text-yellow-800";
       case "Ignore": return "bg-gray-100 text-gray-800";
+      case "Previous Client": return "bg-teal-100 text-teal-800";
       default: return "bg-gray-100 text-gray-800";
     }
   };
