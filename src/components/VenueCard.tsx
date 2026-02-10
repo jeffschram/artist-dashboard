@@ -3,7 +3,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Id } from "../../convex/_generated/dataModel";
 import { MapPin, Users } from "lucide-react";
 
-type Status = "Contacted" | "To Contact" | "Ignore";
+type Status = "Contacted" | "To Contact" | "Ignore" | "Previous Client";
 type Category = "Ultimate Dream Goal" | "Accessible" | "Unconventional";
 
 export interface VenueData {
@@ -35,6 +35,7 @@ function getStatusColor(status: Status) {
     case "Contacted": return "bg-green-100 text-green-800";
     case "To Contact": return "bg-yellow-100 text-yellow-800";
     case "Ignore": return "bg-gray-100 text-gray-600";
+    case "Previous Client": return "bg-teal-100 text-teal-800";
   }
 }
 
@@ -58,6 +59,7 @@ function getAccentBorder(groupBy: "category" | "status", venue: VenueData) {
       case "Contacted": return "border-l-green-400";
       case "To Contact": return "border-l-yellow-400";
       case "Ignore": return "border-l-gray-400";
+      case "Previous Client": return "border-l-teal-400";
     }
   }
 }

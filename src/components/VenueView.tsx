@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
-import { Pencil, X, ExternalLink, MapPin, Users, Phone, Mail, Check } from "lucide-react";
+import { Pencil, X, ExternalLink, MapPin, Users, Phone, Mail, Check, Plus, FolderKanban, Calendar, DollarSign } from "lucide-react";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { toast } from "sonner";
 
@@ -10,6 +10,8 @@ interface VenueViewProps {
   venueId: Id<"venues">;
   onEdit: () => void;
   onClose: () => void;
+  onAddProject?: (venueId: Id<"venues">) => void;
+  onEditProject?: (projectId: Id<"projects">) => void;
 }
 
 function getStatusColor(status: string) {
@@ -17,6 +19,7 @@ function getStatusColor(status: string) {
     case "Contacted": return "bg-green-100 text-green-800";
     case "To Contact": return "bg-yellow-100 text-yellow-800";
     case "Ignore": return "bg-gray-100 text-gray-800";
+    case "Previous Client": return "bg-teal-100 text-teal-800";
     default: return "bg-gray-100 text-gray-800";
   }
 }
@@ -35,8 +38,29 @@ function formatLocation(loc: { city?: string; state?: string; country?: string; 
   return parts.join(", ");
 }
 
-export function VenueView({ venueId, onEdit, onClose }: VenueViewProps) {
+function getProjectStatusStyle(status: string) {
+  switch (status) {
+    case "Planning": return "bg-blue-100 text-blue-800";
+    case "In Progress": return "bg-yellow-100 text-yellow-800";
+    case "Completed": return "bg-green-100 text-green-800";
+    case "Cancelled": return "bg-gray-100 text-gray-600";
+    default: return "bg-gray-100 text-gray-800";
+  }
+}
+
+function formatCurrency(value: number | undefined) {
+  if (value == null) return null;
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+export function VenueView({ venueId, onEdit, onClose, onAddProject, onEditProject }: VenueViewProps) {
   const venue = useQuery(api.venues.get, { id: venueId });
+  const venueProjects = useQuery(api.projects.listByVenue, { venueId });
   const updateVenue = useMutation(api.venues.update);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -256,6 +280,65 @@ export function VenueView({ venueId, onEdit, onClose }: VenueViewProps) {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Projects — only for Previous Client venues */}
+        {venue.status === "Previous Client" && (
+          <div className="bg-white p-6 rounded-lg border border-gray-200">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2">
+                <FolderKanban size={18} className="text-gray-400" />
+                Projects
+              </h3>
+              {onAddProject && (
+                <button
+                  onClick={() => onAddProject(venueId)}
+                  className="flex items-center gap-1 px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <Plus size={14} />
+                  Add Project
+                </button>
+              )}
+            </div>
+            {venueProjects && venueProjects.length > 0 ? (
+              <div className="space-y-2">
+                {venueProjects.map((project) => (
+                  <button
+                    key={project._id}
+                    onClick={() => onEditProject?.(project._id)}
+                    className="w-full text-left p-3 bg-gray-50 rounded-lg border border-gray-100 hover:border-blue-300 hover:bg-blue-50/30 transition-all group"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
+                        {project.name}
+                      </span>
+                      <span className={`shrink-0 px-2 py-0.5 text-xs font-medium rounded-full ${getProjectStatusStyle(project.status)}`}>
+                        {project.status}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4 text-xs text-gray-400 mt-1.5">
+                      {(project.startDate || project.endDate) && (
+                        <span className="flex items-center gap-1">
+                          <Calendar size={11} />
+                          {project.startDate || "?"} — {project.endDate || "?"}
+                        </span>
+                      )}
+                      {formatCurrency(project.budget) && (
+                        <span className="flex items-center gap-1">
+                          <DollarSign size={11} />
+                          {formatCurrency(project.budget)}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">
+                No projects yet. Add one to track your work with this venue.
+              </p>
+            )}
           </div>
         )}
 
