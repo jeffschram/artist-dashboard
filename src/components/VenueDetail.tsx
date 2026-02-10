@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
-import { X, Plus, Trash2, Save, ExternalLink } from "lucide-react";
+import { X, Plus, Trash2, Save, ExternalLink, Search } from "lucide-react";
 import { toast } from "sonner";
 import { MarkdownEditor } from "./MarkdownEditor";
 
@@ -261,7 +261,7 @@ export function VenueDetail({ venueId, isCreating, onClose }: VenueDetailProps) 
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="https://example.com"
                 />
-                {formData.url && (
+                {formData.url ? (
                   <a
                     href={formData.url}
                     target="_blank"
@@ -269,6 +269,18 @@ export function VenueDetail({ venueId, isCreating, onClose }: VenueDetailProps) 
                     className="px-3 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg hover:bg-gray-200 transition-colors"
                   >
                     <ExternalLink size={16} />
+                  </a>
+                ) : (
+                  <a
+                    href={`https://www.google.com/search?q=${encodeURIComponent(
+                      [formData.name, ...formData.locations.map((l) => [l.city, l.state].filter(Boolean).join(", ")).filter(Boolean)].filter(Boolean).join(" ")
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg hover:bg-gray-200 transition-colors text-sm text-gray-600"
+                    title="Search Google for this venue"
+                  >
+                    <Search size={14} />
                   </a>
                 )}
               </div>

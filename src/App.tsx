@@ -50,7 +50,7 @@ export default function App() {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b shadow-sm">
         <div className="h-16 flex justify-between items-center px-6">
-          <h2 className="text-xl font-semibold text-gray-900">Artist Dashboard</h2>
+          <h2 className="text-xl font-semibold text-gray-900">⚡️Artist Dashboard</h2>
           <button
             onClick={handleLogout}
             className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
