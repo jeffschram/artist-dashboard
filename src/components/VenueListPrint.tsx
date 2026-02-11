@@ -1,6 +1,9 @@
 import { useMemo } from "react";
 import { Id } from "../../convex/_generated/dataModel";
 import { Printer, ExternalLink, MapPin, Mail, Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface VenueData {
   _id: Id<"venues">;
@@ -28,13 +31,13 @@ const CATEGORY_STYLE: Record<string, { bg: string; text: string; border: string 
   "Unconventional": { bg: "bg-orange-50", text: "text-orange-800", border: "border-orange-200" },
 };
 
-function getStatusBadge(status: string) {
+function getStatusBadgeClass(status: string) {
   switch (status) {
-    case "Contacted": return "bg-green-100 text-green-800";
-    case "To Contact": return "bg-yellow-100 text-yellow-800";
-    case "Ignore": return "bg-gray-100 text-gray-600";
-    case "Previous Client": return "bg-teal-100 text-teal-800";
-    default: return "bg-gray-100 text-gray-800";
+    case "Contacted": return "bg-green-100 text-green-800 hover:bg-green-100";
+    case "To Contact": return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
+    case "Ignore": return "bg-gray-100 text-gray-600 hover:bg-gray-100";
+    case "Previous Client": return "bg-teal-100 text-teal-800 hover:bg-teal-100";
+    default: return "bg-gray-100 text-gray-800 hover:bg-gray-100";
   }
 }
 
@@ -52,7 +55,6 @@ export function VenueListPrint({ venues, onVenueSelect }: VenueListPrintProps) {
       if (!groups[venue.category]) groups[venue.category] = [];
       groups[venue.category].push(venue);
     }
-    // Sort venues by orderNum within each group
     for (const cat of Object.keys(groups)) {
       groups[cat].sort((a, b) => a.orderNum - b.orderNum);
     }
@@ -65,16 +67,13 @@ export function VenueListPrint({ venues, onVenueSelect }: VenueListPrintProps) {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Print button — hidden when printing */}
-      <div className="px-6 py-3 bg-white border-b border-gray-200 flex items-center gap-3 print:hidden">
-        <button
-          onClick={handlePrint}
-          className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
-        >
-          <Printer size={16} />
+      {/* Print button */}
+      <div className="px-6 py-3 bg-background border-b flex items-center gap-3 print:hidden">
+        <Button onClick={handlePrint} size="sm">
+          <Printer className="h-4 w-4" />
           Print
-        </button>
-        <span className="text-xs text-gray-500">
+        </Button>
+        <span className="text-xs text-muted-foreground">
           {venues.length} venue{venues.length !== 1 ? "s" : ""} across {CATEGORY_ORDER.length} categories
         </span>
       </div>
@@ -84,8 +83,8 @@ export function VenueListPrint({ venues, onVenueSelect }: VenueListPrintProps) {
         <div className="max-w-4xl mx-auto space-y-8 print:space-y-6 print:max-w-none">
           {/* Print header */}
           <div className="hidden print:block text-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Venue List</h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <h1 className="text-2xl font-bold">Venue List</h1>
+            <p className="text-sm text-muted-foreground mt-1">
               {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
             </p>
           </div>
@@ -98,8 +97,8 @@ export function VenueListPrint({ venues, onVenueSelect }: VenueListPrintProps) {
             return (
               <div key={category} className="print:break-inside-avoid-page">
                 {/* Category header */}
-                <div className={`px-4 py-2.5 rounded-lg ${style.bg} ${style.border} border mb-3 print:rounded-none print:border-x-0 print:border-t-0 print:border-b-2`}>
-                  <h2 className={`text-lg font-bold ${style.text}`}>
+                <div className={cn("px-4 py-2.5 rounded-lg border mb-3", style.bg, style.border, "print:rounded-none print:border-x-0 print:border-t-0 print:border-b-2")}>
+                  <h2 className={cn("text-lg font-bold", style.text)}>
                     {category}
                     <span className="ml-2 text-sm font-normal opacity-70">
                       ({venuesInCategory.length})
@@ -107,7 +106,6 @@ export function VenueListPrint({ venues, onVenueSelect }: VenueListPrintProps) {
                   </h2>
                 </div>
                 <ul>
-                  {/* Venue rows */}
                   <li className="space-y-2">
                     {venuesInCategory.map((venue) => {
                       const locations = venue.locations.filter(
@@ -120,25 +118,25 @@ export function VenueListPrint({ venues, onVenueSelect }: VenueListPrintProps) {
                       return (
                         <div
                           key={venue._id}
-                          className="bg-white border border-gray-200 rounded-lg p-4 print:rounded-none print:border-x-0 print:border-t-0 print:border-b print:px-2 print:py-3 print:break-inside-avoid cursor-pointer hover:border-blue-300 hover:shadow-sm transition-all print:hover:border-gray-200 print:hover:shadow-none"
+                          className="bg-card border rounded-lg p-4 print:rounded-none print:border-x-0 print:border-t-0 print:border-b print:px-2 print:py-3 print:break-inside-avoid cursor-pointer hover:border-primary/30 hover:shadow-sm transition-all print:hover:border-border print:hover:shadow-none"
                           onClick={() => onVenueSelect(venue._id)}
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0 flex-1">
                               {/* Name + status */}
                               <div className="flex items-center gap-2 flex-wrap">
-                                <h3 className="font-semibold text-gray-900">
+                                <h3 className="font-semibold">
                                   {venue.name}
                                 </h3>
-                                <span className={`px-2 py-0.5 text-[10px] font-medium rounded-full ${getStatusBadge(venue.status)} print:border print:border-current`}>
+                                <Badge variant="secondary" className={cn("text-[10px] border-0 rounded-full print:border print:border-current", getStatusBadgeClass(venue.status))}>
                                   {venue.status}
-                                </span>
+                                </Badge>
                               </div>
 
                               {/* Location */}
                               {locations.length > 0 && (
-                                <div className="flex items-center gap-1 mt-1 text-sm text-gray-500">
-                                  <MapPin size={12} className="shrink-0" />
+                                <div className="flex items-center gap-1 mt-1 text-sm text-muted-foreground">
+                                  <MapPin className="h-3 w-3 shrink-0" />
                                   {locations.map((l, i) => (
                                     <span key={i}>
                                       {formatLocation(l)}
@@ -150,14 +148,14 @@ export function VenueListPrint({ venues, onVenueSelect }: VenueListPrintProps) {
 
                               {/* Contacts */}
                               {contacts.length > 0 && (
-                                <div className="flex items-center gap-3 mt-1.5 text-sm text-gray-500">
-                                  <Users size={12} className="shrink-0" />
+                                <div className="flex items-center gap-3 mt-1.5 text-sm text-muted-foreground">
+                                  <Users className="h-3 w-3 shrink-0" />
                                   {contacts.map((c, i) => (
                                     <span key={i} className="flex items-center gap-1">
                                       {c.name}
                                       {c.email && (
-                                        <span className="text-gray-400 flex items-center gap-0.5">
-                                          <Mail size={10} />
+                                        <span className="text-muted-foreground/60 flex items-center gap-0.5">
+                                          <Mail className="h-2.5 w-2.5" />
                                           {c.email}
                                         </span>
                                       )}
@@ -168,7 +166,7 @@ export function VenueListPrint({ venues, onVenueSelect }: VenueListPrintProps) {
 
                               {/* Notes preview */}
                               {venue.notes && (
-                                <p className="text-xs text-gray-400 mt-1.5 line-clamp-2 print:line-clamp-none">
+                                <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2 print:line-clamp-none">
                                   {venue.notes}
                                 </p>
                               )}
@@ -181,16 +179,16 @@ export function VenueListPrint({ venues, onVenueSelect }: VenueListPrintProps) {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={(e) => e.stopPropagation()}
-                                className="shrink-0 text-gray-400 hover:text-blue-600 transition-colors print:hidden"
+                                className="shrink-0 text-muted-foreground hover:text-primary transition-colors print:hidden"
                               >
-                                <ExternalLink size={14} />
+                                <ExternalLink className="h-3.5 w-3.5" />
                               </a>
                             )}
                           </div>
 
                           {/* URL for print */}
                           {venue.url && (
-                            <p className="hidden print:block text-xs text-gray-400 mt-1 break-all">
+                            <p className="hidden print:block text-xs text-muted-foreground mt-1 break-all">
                               {venue.url}
                             </p>
                           )}

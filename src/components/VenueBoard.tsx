@@ -19,6 +19,9 @@ import { VenueMap } from "./VenueMap";
 import { VenueListPrint } from "./VenueListPrint";
 import { Search, Plus, LayoutGrid, Map, List, Columns3 } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 type GroupBy = "category" | "status";
 type ViewMode = "kanban" | "map" | "list";
@@ -61,8 +64,6 @@ export function VenueBoard({
   const [groupBy, setGroupBy] = useState<GroupBy>("category");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeId, setActiveId] = useState<Id<"venues"> | null>(null);
-  // Optimistic column override: when dragging across columns, temporarily
-  // reassign the venue to the target column so cards shift to make room.
   const [columnOverride, setColumnOverride] = useState<{
     venueId: Id<"venues">;
     column: string;
@@ -83,14 +84,12 @@ export function VenueBoard({
     );
   }, [groupBy]);
 
-  // Filter venues by search
   const filteredVenues = useMemo(() => {
     if (!searchQuery.trim()) return venues;
     const q = searchQuery.toLowerCase();
     return venues.filter((v) => v.name.toLowerCase().includes(q));
   }, [venues, searchQuery]);
 
-  // Resolve which column a venue belongs to, accounting for optimistic override
   const getVenueColumn = useCallback(
     (venue: VenueData): string => {
       if (columnOverride && columnOverride.venueId === venue._id) {
@@ -101,7 +100,6 @@ export function VenueBoard({
     [groupBy, columnOverride],
   );
 
-  // Group venues into columns
   const columns = useMemo(() => {
     const cols = groupBy === "category" ? CATEGORY_COLUMNS : STATUS_COLUMNS;
     return cols.map((col) => ({
@@ -116,14 +114,11 @@ export function VenueBoard({
     ? venues.find((v) => v._id === activeId) ?? null
     : null;
 
-  // Determine which column an over target belongs to
   const resolveOverColumn = useCallback(
     (overId: string | number): string | null => {
-      // Is it a column directly?
       if (allColumnKeys.includes(overId as string)) {
         return overId as string;
       }
-      // It's a card — find which column that card is in
       const overVenue = filteredVenues.find((v) => v._id === overId);
       if (overVenue) {
         return getVenueColumn(overVenue);
@@ -137,7 +132,6 @@ export function VenueBoard({
     setActiveId(event.active.id as Id<"venues">);
   };
 
-  // Called continuously as the dragged item moves over targets
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
     if (!over) {
@@ -157,7 +151,6 @@ export function VenueBoard({
     if (targetColumn !== currentColumn) {
       setColumnOverride({ venueId, column: targetColumn });
     } else {
-      // Back to original column
       setColumnOverride(null);
     }
   };
@@ -165,8 +158,6 @@ export function VenueBoard({
   const handleDragEnd = async (event: DragEndEvent) => {
     const override = columnOverride;
     setActiveId(null);
-    // Keep columnOverride alive — don't clear it yet.
-    // It will be cleared after the mutations resolve.
 
     const { active, over } = event;
     if (!over) {
@@ -181,7 +172,6 @@ export function VenueBoard({
       return;
     }
 
-    // Use the override if we had one, otherwise resolve from over target
     const targetColumnKey = override
       ? override.column
       : resolveOverColumn(over.id);
@@ -194,7 +184,6 @@ export function VenueBoard({
     const currentValue = groupBy === "category" ? venue.category : venue.status;
     const columnChanged = currentValue !== targetColumnKey;
 
-    // Determine target position: if dropped on a card, use that card's orderNum
     let targetOrderNum: number | null = null;
     if (!allColumnKeys.includes(over.id as string)) {
       const targetVenue = venues.find((v) => v._id === over.id);
@@ -203,14 +192,12 @@ export function VenueBoard({
       }
     }
 
-    // Nothing to do if same column and no position change
     if (!columnChanged && targetOrderNum === null) {
       setColumnOverride(null);
       return;
     }
 
     try {
-      // 1. Update category/status if column changed
       if (columnChanged) {
         await updateVenue({
           id: venue._id,
@@ -225,7 +212,6 @@ export function VenueBoard({
         });
       }
 
-      // 2. Reorder to the drop position
       if (targetOrderNum !== null && targetOrderNum !== venue.orderNum) {
         await reorderVenue({ venueId: venue._id, newOrderNum: targetOrderNum });
       }
@@ -248,103 +234,71 @@ export function VenueBoard({
   return (
     <div className="h-full flex flex-col">
       {/* Toolbar */}
-      <div className="px-5 py-3 bg-white border-b border-gray-200 flex items-center gap-4 print:hidden">
+      <div className="px-5 py-3 bg-background border-b flex items-center gap-4 print:hidden">
         {/* Search */}
         <div className="relative flex-1 max-w-sm">
-          <Search
-            size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-          />
-          <input
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search venues..."
-            className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="pl-9"
           />
         </div>
 
         {/* View mode toggle */}
-        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
-          <button
-            onClick={() => setViewMode("kanban")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-              viewMode === "kanban"
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-            title="Kanban board"
-          >
-            <Columns3 size={13} />
+        <ToggleGroup
+          type="single"
+          value={viewMode}
+          onValueChange={(v) => v && setViewMode(v as ViewMode)}
+          variant="outline"
+          size="sm"
+        >
+          <ToggleGroupItem value="kanban" aria-label="Kanban board" className="gap-1.5 text-xs">
+            <Columns3 className="h-3.5 w-3.5" />
             Board
-          </button>
-          <button
-            onClick={() => setViewMode("map")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-              viewMode === "map"
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-            title="Map view"
-          >
-            <Map size={13} />
+          </ToggleGroupItem>
+          <ToggleGroupItem value="map" aria-label="Map view" className="gap-1.5 text-xs">
+            <Map className="h-3.5 w-3.5" />
             Map
-          </button>
-          <button
-            onClick={() => setViewMode("list")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-              viewMode === "list"
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-            title="Printable list"
-          >
-            <List size={13} />
+          </ToggleGroupItem>
+          <ToggleGroupItem value="list" aria-label="Printable list" className="gap-1.5 text-xs">
+            <List className="h-3.5 w-3.5" />
             List
-          </button>
-        </div>
+          </ToggleGroupItem>
+        </ToggleGroup>
 
         {/* Group by toggle — only relevant in kanban mode */}
         {viewMode === "kanban" && (
-          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
-            <button
-              onClick={() => setGroupBy("category")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                groupBy === "category"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              <LayoutGrid size={13} />
+          <ToggleGroup
+            type="single"
+            value={groupBy}
+            onValueChange={(v) => v && setGroupBy(v as GroupBy)}
+            variant="outline"
+            size="sm"
+          >
+            <ToggleGroupItem value="category" className="gap-1.5 text-xs">
+              <LayoutGrid className="h-3.5 w-3.5" />
               Category
-            </button>
-            <button
-              onClick={() => setGroupBy("status")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                groupBy === "status"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              <LayoutGrid size={13} />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="status" className="gap-1.5 text-xs">
+              <LayoutGrid className="h-3.5 w-3.5" />
               Status
-            </button>
-          </div>
+            </ToggleGroupItem>
+          </ToggleGroup>
         )}
 
         {/* Venue count */}
-        <span className="text-xs text-gray-500">
+        <span className="text-xs text-muted-foreground">
           {filteredVenues.length} venue{filteredVenues.length !== 1 ? "s" : ""}
         </span>
 
         {/* Add button */}
-        <button
-          onClick={onCreateNew}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors ml-auto"
-        >
-          <Plus size={16} />
+        <Button onClick={onCreateNew} size="sm" className="ml-auto">
+          <Plus className="h-4 w-4" />
           Add Venue
-        </button>
+        </Button>
       </div>
 
       {/* Content — switch on viewMode */}

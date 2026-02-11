@@ -5,6 +5,22 @@ import { Id } from "../../convex/_generated/dataModel";
 import { X, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { MarkdownEditor } from "./MarkdownEditor";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Combobox,
+  ComboboxChips,
+  ComboboxChip,
+  ComboboxChipsInput,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxValue,
+  useComboboxAnchor,
+} from "@/components/ui/combobox";
 
 interface ContactDetailProps {
   contactId: Id<"contacts"> | null;
@@ -38,6 +54,7 @@ export function ContactDetail({
     venueIds: [] as string[],
   });
   const [isSaving, setIsSaving] = useState(false);
+  const venuesAnchor = useComboboxAnchor();
 
   useEffect(() => {
     if (contact && !isCreating) {
@@ -109,7 +126,7 @@ export function ContactDetail({
   if (contact === undefined && !isCreating) {
     return (
       <div className="flex justify-center items-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -117,151 +134,153 @@ export function ContactDetail({
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="p-6 border-b border-gray-200 bg-white">
+      <div className="p-6 border-b bg-background">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-gray-900">
+          <h2 className="text-xl font-semibold">
             {isCreating ? "New Contact" : "Edit Contact"}
           </h2>
           <div className="flex items-center gap-2">
             {!isCreating && (
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={handleDelete}
-                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                title="Delete contact"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
               >
-                <Trash2 size={18} />
-              </button>
+                <Trash2 className="h-4 w-4" />
+              </Button>
             )}
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-            >
-              <Save size={16} />
+            <Button onClick={handleSave} disabled={isSaving} size="sm">
+              <Save className="h-4 w-4" />
               {isSaving ? "Saving..." : "Save"}
-            </button>
-            <button
-              onClick={onClose}
-              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <X size={18} />
-            </button>
+            </Button>
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </div>
 
       {/* Body */}
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
-        <div className="bg-white p-6 rounded-lg border border-gray-200 space-y-4">
-          <h3 className="text-lg font-medium text-gray-900">Details</h3>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Name *
-            </label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, name: e.target.value }))
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Contact name"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email
-              </label>
-              <input
-                type="email"
-                value={formData.email}
+        <Card>
+          <CardHeader>
+            <CardTitle>Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Name *</Label>
+              <Input
+                type="text"
+                value={formData.name}
                 onChange={(e) =>
-                  setFormData((p) => ({ ...p, email: e.target.value }))
+                  setFormData((p) => ({ ...p, name: e.target.value }))
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="email@example.com"
+                placeholder="Contact name"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Phone
-              </label>
-              <input
-                type="tel"
-                value={formData.phone}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, email: e.target.value }))
+                  }
+                  placeholder="email@example.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Phone</Label>
+                <Input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, phone: e.target.value }))
+                  }
+                  placeholder="(555) 555-5555"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Role</Label>
+              <Input
+                type="text"
+                value={formData.role}
                 onChange={(e) =>
-                  setFormData((p) => ({ ...p, phone: e.target.value }))
+                  setFormData((p) => ({ ...p, role: e.target.value }))
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="(555) 555-5555"
+                placeholder="e.g. Booking Agent, Manager"
               />
             </div>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Role
-            </label>
-            <input
-              type="text"
-              value={formData.role}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, role: e.target.value }))
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="e.g. Booking Agent, Manager"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Venues (optional)
-            </label>
-            <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-2 space-y-1">
-              {(venues ?? []).map((v) => (
-                <label
-                  key={v._id}
-                  className="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 rounded cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    checked={formData.venueIds.includes(v._id)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setFormData((p) => ({
-                          ...p,
-                          venueIds: [...p.venueIds, v._id],
-                        }));
-                      } else {
-                        setFormData((p) => ({
-                          ...p,
-                          venueIds: p.venueIds.filter((id) => id !== v._id),
-                        }));
-                      }
+            <div className="space-y-2">
+              <Label>Venues (optional)</Label>
+              <Combobox
+                multiple
+                items={(venues ?? []).map((v) => v._id)}
+                itemToStringValue={(id) => {
+                  const v = (venues ?? []).find((v) => v._id === id);
+                  return v?.name ?? "";
+                }}
+                value={formData.venueIds}
+                onValueChange={(ids) =>
+                  setFormData((p) => ({ ...p, venueIds: ids }))
+                }
+              >
+                <ComboboxChips ref={venuesAnchor}>
+                  <ComboboxValue>
+                    {(values: string[]) => (
+                      <>
+                        {values.map((id) => {
+                          const v = (venues ?? []).find((v) => v._id === id);
+                          return (
+                            <ComboboxChip key={id}>
+                              {v?.name ?? "Unknown"}
+                            </ComboboxChip>
+                          );
+                        })}
+                        <ComboboxChipsInput placeholder="Search venues..." />
+                      </>
+                    )}
+                  </ComboboxValue>
+                </ComboboxChips>
+                <ComboboxContent anchor={venuesAnchor}>
+                  <ComboboxEmpty>No venues found.</ComboboxEmpty>
+                  <ComboboxList>
+                    {(id: string) => {
+                      const v = (venues ?? []).find((v) => v._id === id);
+                      return (
+                        <ComboboxItem key={id} value={id}>
+                          {v?.name}
+                        </ComboboxItem>
+                      );
                     }}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-900">{v.name}</span>
-                </label>
-              ))}
+                  </ComboboxList>
+                </ComboboxContent>
+              </Combobox>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Notes */}
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Notes</h3>
-          <MarkdownEditor
-            content={formData.notes}
-            onChange={(markdown) =>
-              setFormData((p) => ({ ...p, notes: markdown }))
-            }
-            placeholder="Add notes about this contact..."
-          />
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Notes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MarkdownEditor
+              content={formData.notes}
+              onChange={(markdown) =>
+                setFormData((p) => ({ ...p, notes: markdown }))
+              }
+              placeholder="Add notes about this contact..."
+            />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

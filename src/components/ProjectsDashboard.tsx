@@ -11,21 +11,20 @@ import {
   DollarSign,
   Building2,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 type Mode = "idle" | "editing" | "creating";
 
-function getStatusStyle(status: string) {
+function getStatusBadgeClass(status: string) {
   switch (status) {
-    case "Planning":
-      return "bg-blue-100 text-blue-800";
-    case "In Progress":
-      return "bg-yellow-100 text-yellow-800";
-    case "Completed":
-      return "bg-green-100 text-green-800";
-    case "Cancelled":
-      return "bg-gray-100 text-gray-600";
-    default:
-      return "bg-gray-100 text-gray-800";
+    case "Planning": return "bg-blue-100 text-blue-800 hover:bg-blue-100";
+    case "In Progress": return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
+    case "Completed": return "bg-green-100 text-green-800 hover:bg-green-100";
+    case "Cancelled": return "bg-gray-100 text-gray-600 hover:bg-gray-100";
+    default: return "bg-gray-100 text-gray-800 hover:bg-gray-100";
   }
 }
 
@@ -51,7 +50,7 @@ export function ProjectsDashboard() {
   if (projects === undefined || venues === undefined) {
     return (
       <div className="flex justify-center items-center h-96">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -98,60 +97,54 @@ export function ProjectsDashboard() {
   return (
     <div className="h-[calc(100vh-7rem)]">
       {/* Toolbar */}
-      <div className="px-6 py-4 bg-white border-b border-gray-200 flex items-center gap-4 flex-wrap">
+      <div className="px-6 py-4 bg-background border-b flex items-center gap-4 flex-wrap">
         <div className="relative flex-1 max-w-sm">
-          <Search
-            size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-          />
-          <input
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search projects..."
-            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            className="pl-9"
           />
         </div>
 
         <div className="flex items-center gap-2">
-          <button
+          <Button
+            variant={statusFilter === "all" ? "default" : "secondary"}
+            size="sm"
+            className="rounded-full text-xs"
             onClick={() => setStatusFilter("all")}
-            className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
-              statusFilter === "all"
-                ? "bg-gray-900 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
           >
             All ({projects.length})
-          </button>
+          </Button>
           {["Planning", "In Progress", "Completed", "Cancelled"].map((s) => (
-            <button
+            <Button
               key={s}
+              variant={statusFilter === s ? "default" : "outline"}
+              size="sm"
+              className={cn(
+                "rounded-full text-xs",
+                statusFilter !== s && "border-0",
+                statusFilter !== s && getStatusBadgeClass(s),
+              )}
               onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
-                statusFilter === s
-                  ? "bg-gray-900 text-white"
-                  : `${getStatusStyle(s)} hover:opacity-80`
-              }`}
             >
               {s} ({statusCounts[s] || 0})
-            </button>
+            </Button>
           ))}
         </div>
 
-        <button
-          onClick={handleCreate}
-          className="ml-auto flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-        >
-          <Plus size={16} />
+        <Button onClick={handleCreate} size="sm" className="ml-auto">
+          <Plus className="h-4 w-4" />
           New Project
-        </button>
+        </Button>
       </div>
 
       {/* Project cards */}
       <div className="flex-1 overflow-y-auto p-6">
         {filtered.length === 0 ? (
-          <div className="text-center py-16 text-gray-500">
+          <div className="text-center py-16 text-muted-foreground">
             <p className="text-lg font-medium">No projects found</p>
             <p className="text-sm mt-1">
               {projects.length === 0
@@ -173,40 +166,38 @@ export function ProjectsDashboard() {
                 <button
                   key={project._id}
                   onClick={() => handleSelect(project._id)}
-                  className="text-left bg-white p-5 rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all group"
+                  className="text-left bg-card p-5 rounded-xl border hover:border-primary/30 hover:shadow-md transition-all group"
                 >
                   <div className="flex items-start justify-between gap-2 mb-3">
-                    <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">
+                    <h3 className="font-semibold group-hover:text-primary transition-colors line-clamp-1">
                       {project.name}
                     </h3>
-                    <span
-                      className={`shrink-0 px-2.5 py-0.5 text-xs font-medium rounded-full ${getStatusStyle(project.status)}`}
-                    >
+                    <Badge variant="secondary" className={cn("shrink-0 border-0", getStatusBadgeClass(project.status))}>
                       {project.status}
-                    </span>
+                    </Badge>
                   </div>
 
-                  <div className="flex items-center gap-1.5 text-sm text-gray-500 mb-2">
-                    <Building2 size={14} className="shrink-0" />
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-2">
+                    <Building2 className="h-3.5 w-3.5 shrink-0" />
                     <span className="truncate">{venueDisplay}</span>
                   </div>
 
                   {project.description && (
-                    <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
                       {project.description}
                     </p>
                   )}
 
-                  <div className="flex items-center gap-4 text-xs text-gray-400 mt-auto pt-2 border-t border-gray-100">
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground mt-auto pt-2 border-t">
                     {(project.startDate || project.endDate) && (
                       <span className="flex items-center gap-1">
-                        <Calendar size={12} />
+                        <Calendar className="h-3 w-3" />
                         {project.startDate || "?"} — {project.endDate || "?"}
                       </span>
                     )}
                     {project.budget != null && (
                       <span className="flex items-center gap-1">
-                        <DollarSign size={12} />
+                        <DollarSign className="h-3 w-3" />
                         {formatCurrency(project.budget)}
                       </span>
                     )}

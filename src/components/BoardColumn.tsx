@@ -5,6 +5,8 @@ import {
 } from "@dnd-kit/sortable";
 import { VenueCard, VenueData } from "./VenueCard";
 import { Id } from "../../convex/_generated/dataModel";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface BoardColumnProps {
   id: string;
@@ -33,19 +35,20 @@ export function BoardColumn({
 
   return (
     <div
-      className={`flex flex-col min-w-0 flex-1 rounded-xl bg-gray-100/80 transition-colors duration-200 ${
-        isOver ? "bg-blue-50/80 ring-2 ring-blue-200" : ""
-      }`}
+      className={cn(
+        "flex flex-col min-w-0 flex-1 rounded-xl bg-muted/60 transition-colors duration-200",
+        isOver && "bg-primary/5 ring-2 ring-primary/20",
+      )}
     >
       {/* Column header */}
       <div className="px-4 py-3 flex items-center gap-2">
-        <div className={`w-2.5 h-2.5 rounded-full ${accentColor}`} />
-        <h3 className="font-semibold text-sm text-gray-800 truncate">
+        <div className={cn("w-2.5 h-2.5 rounded-full", accentColor)} />
+        <h3 className="font-semibold text-sm truncate">
           {title}
         </h3>
-        <span className="ml-auto text-xs font-medium text-gray-500 bg-white px-2 py-0.5 rounded-full shadow-sm">
+        <Badge variant="secondary" className="ml-auto text-xs rounded-full">
           {venues.length}
-        </span>
+        </Badge>
       </div>
 
       {/* Scrollable card list */}
@@ -67,7 +70,7 @@ export function BoardColumn({
         </SortableContext>
 
         {venues.length === 0 && !activeId && (
-          <div className="flex items-center justify-center h-20 text-xs text-gray-400 border-2 border-dashed border-gray-200 rounded-lg">
+          <div className="flex items-center justify-center h-20 text-xs text-muted-foreground border-2 border-dashed border-border rounded-lg">
             Drop venues here
           </div>
         )}

@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { Dashboard } from "./components/Dashboard";
 import { ProjectsDashboard } from "./components/ProjectsDashboard";
 import { ContactsDashboard } from "./components/ContactsDashboard";
@@ -9,9 +11,9 @@ import { LogOut, Building2, FolderKanban, Users } from "lucide-react";
 type Tab = "venues" | "projects" | "contacts";
 
 const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
-  { key: "venues", label: "Venues", icon: <Building2 size={16} /> },
-  { key: "projects", label: "Projects", icon: <FolderKanban size={16} /> },
-  { key: "contacts", label: "Contacts", icon: <Users size={16} /> },
+  { key: "venues", label: "Venues", icon: <Building2 className="h-4 w-4" /> },
+  { key: "projects", label: "Projects", icon: <FolderKanban className="h-4 w-4" /> },
+  { key: "contacts", label: "Contacts", icon: <Users className="h-4 w-4" /> },
 ];
 
 export default function App() {
@@ -37,7 +39,7 @@ export default function App() {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -47,41 +49,43 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b shadow-sm">
-        <div className="h-16 flex justify-between items-center px-6">
-          <h2 className="text-xl font-semibold text-gray-900">⚡️Artist Dashboard</h2>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <LogOut size={16} />
-            Logout
-          </button>
-        </div>
-        {/* Tab navigation */}
-        <nav className="flex px-6 -mb-px">
-          {TABS.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === tab.key
-                  ? "border-blue-600 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-      </header>
-      <main className="flex-1">
-        {activeTab === "venues" && <Dashboard />}
-        {activeTab === "projects" && <ProjectsDashboard />}
-        {activeTab === "contacts" && <ContactsDashboard />}
-      </main>
+    <div className="min-h-screen flex flex-col bg-muted/40">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as Tab)} className="flex flex-col flex-1">
+        <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
+          <div className="h-16 flex justify-between items-center px-6">
+            <h2 className="text-xl font-semibold">⚡️Artist Dashboard</h2>
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
+              <LogOut className="h-4 w-4" />
+              Logout
+            </Button>
+          </div>
+          <nav className="px-6 -mb-px">
+            <TabsList className="bg-transparent h-auto p-0 gap-0">
+              {TABS.map((tab) => (
+                <TabsTrigger
+                  key={tab.key}
+                  value={tab.key}
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2.5 gap-2"
+                >
+                  {tab.icon}
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </nav>
+        </header>
+        <main className="flex-1">
+          <TabsContent value="venues" className="mt-0 h-full">
+            <Dashboard />
+          </TabsContent>
+          <TabsContent value="projects" className="mt-0 h-full">
+            <ProjectsDashboard />
+          </TabsContent>
+          <TabsContent value="contacts" className="mt-0 h-full">
+            <ContactsDashboard />
+          </TabsContent>
+        </main>
+      </Tabs>
       <Toaster />
     </div>
   );
