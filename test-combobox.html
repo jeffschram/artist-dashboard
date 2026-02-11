@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Combobox Test Instructions</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 { color: #2563eb; }
+        h2 { color: #1e40af; margin-top: 30px; }
+        .step {
+            background: #f3f4f6;
+            border-left: 4px solid #2563eb;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .step-number {
+            font-weight: bold;
+            color: #2563eb;
+        }
+        .checkpoint {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .error-check {
+            background: #fee2e2;
+            border-left: 4px solid #ef4444;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        code {
+            background: #e5e7eb;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .console-command {
+            background: #1f2937;
+            color: #10b981;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Venue Contacts Combobox Testing Guide</h1>
+    
+    <p><strong>App URL:</strong> <a href="http://localhost:5173" target="_blank">http://localhost:5173</a></p>
+
+    <h2>📋 Pre-Test Setup</h2>
+    <div class="step">
+        <span class="step-number">1.</span> Open Chrome/Firefox Developer Tools (F12 or Cmd+Option+I)
+    </div>
+    <div class="step">
+        <span class="step-number">2.</span> Navigate to the <strong>Console</strong> tab
+    </div>
+    <div class="step">
+        <span class="step-number">3.</span> Clear the console (click the 🚫 icon or type <code>clear()</code>)
+    </div>
+
+    <h2>🎯 Test Procedure</h2>
+
+    <div class="step">
+        <span class="step-number">Step 1:</span> Take Initial Screenshot
+        <div class="checkpoint">
+            ✅ Checkpoint: Note the current state of the app
+        </div>
+    </div>
+
+    <div class="step">
+        <span class="step-number">Step 2:</span> Navigate to Venues
+        <ul>
+            <li>Look for a "Venues" tab, link, or section</li>
+            <li>Click on it to view the venues list/board</li>
+        </ul>
+        <div class="checkpoint">
+            ✅ Checkpoint: Can you see venues displayed?
+        </div>
+    </div>
+
+    <div class="step">
+        <span class="step-number">Step 3:</span> Open Venue Editor
+        <ul>
+            <li>Option A: Click an "Edit" button on an existing venue</li>
+            <li>Option B: Click a "New Venue" or "+ Add Venue" button</li>
+        </ul>
+        <div class="checkpoint">
+            ✅ Checkpoint: Does a slide-over panel open from the right side?
+        </div>
+        <div class="error-check">
+            ⚠️ Check Console: Any errors at this point?
+        </div>
+    </div>
+
+    <div class="step">
+        <span class="step-number">Step 4:</span> Scroll to Contacts Section
+        <ul>
+            <li>In the slide-over panel, scroll down</li>
+            <li>Look for a card with the title "Contacts"</li>
+            <li>Find the section labeled "Link existing contacts"</li>
+        </ul>
+        <div class="checkpoint">
+            ✅ Checkpoint: Can you see the contacts combobox input?
+        </div>
+    </div>
+
+    <div class="step">
+        <span class="step-number">Step 5:</span> Click the Combobox Input
+        <ul>
+            <li>Click inside the input area (should show "Search contacts..." placeholder)</li>
+            <li><strong>WAIT 1 SECOND</strong></li>
+        </ul>
+        <div class="checkpoint">
+            ✅ Checkpoint: Does a dropdown menu appear below the input?
+        </div>
+        <div class="checkpoint">
+            ✅ Checkpoint: Are there contact items visible in the dropdown?
+        </div>
+        <div class="error-check">
+            ⚠️ Check Console: Any errors? Copy the full error message!
+        </div>
+        <div class="error-check">
+            ⚠️ Take Screenshot: Capture the dropdown state
+        </div>
+    </div>
+
+    <div class="step">
+        <span class="step-number">Step 6:</span> Click a Contact Item
+        <ul>
+            <li>Click on one of the contact items in the dropdown</li>
+            <li><strong>WAIT 1 SECOND</strong></li>
+        </ul>
+        <div class="checkpoint">
+            ✅ Checkpoint: Does a "chip" (small pill-shaped button) appear in the input area?
+        </div>
+        <div class="checkpoint">
+            ✅ Checkpoint: Does the dropdown stay open (for multi-select)?
+        </div>
+        <div class="error-check">
+            ⚠️ Check Console: Any new errors?
+        </div>
+        <div class="error-check">
+            ⚠️ Take Screenshot: Capture the result after clicking
+        </div>
+    </div>
+
+    <div class="step">
+        <span class="step-number">Step 7:</span> Test Chip Removal (if chip appeared)
+        <ul>
+            <li>Look for an X icon on the chip</li>
+            <li>Click the X to remove the chip</li>
+        </ul>
+        <div class="checkpoint">
+            ✅ Checkpoint: Does the chip disappear?
+        </div>
+    </div>
+
+    <div class="step">
+        <span class="step-number">Step 8:</span> Test Search Functionality
+        <ul>
+            <li>Click in the input again</li>
+            <li>Type some letters (e.g., first few letters of a contact name)</li>
+        </ul>
+        <div class="checkpoint">
+            ✅ Checkpoint: Does the dropdown filter to show matching contacts?
+        </div>
+    </div>
+
+    <h2>🔍 Advanced Debugging</h2>
+
+    <div class="step">
+        <span class="step-number">Debug 1:</span> Check if Combobox is rendering
+        <p>In the Console, run:</p>
+        <div class="console-command">
+            document.querySelector('[data-slot="combobox-chips"]')
+        </div>
+        <div class="checkpoint">
+            ✅ Should return: An HTMLElement (not null)
+        </div>
+    </div>
+
+    <div class="step">
+        <span class="step-number">Debug 2:</span> Check if dropdown content exists
+        <p>In the Console, run:</p>
+        <div class="console-command">
+            document.querySelector('[data-slot="combobox-content"]')
+        </div>
+        <div class="checkpoint">
+            ✅ Should return: An HTMLElement when dropdown is open, null when closed
+        </div>
+    </div>
+
+    <div class="step">
+        <span class="step-number">Debug 3:</span> Check for items in dropdown
+        <p>In the Console, run:</p>
+        <div class="console-command">
+            document.querySelectorAll('[data-slot="combobox-item"]').length
+        </div>
+        <div class="checkpoint">
+            ✅ Should return: A number > 0 when dropdown is open with contacts
+        </div>
+    </div>
+
+    <div class="step">
+        <span class="step-number">Debug 4:</span> Monitor click events
+        <p>In the Console, run this BEFORE clicking an item:</p>
+        <div class="console-command">
+            document.addEventListener('click', (e) => {<br>
+            &nbsp;&nbsp;console.log('Clicked:', e.target);<br>
+            }, true);
+        </div>
+        <div class="checkpoint">
+            ✅ Then click an item and see what element was clicked
+        </div>
+    </div>
+
+    <h2>📊 Report Template</h2>
+    <div class="step">
+        <p>Please provide the following information:</p>
+        <ul>
+            <li><strong>Step 5 Result:</strong> Did dropdown open? (Yes/No)</li>
+            <li><strong>Step 6 Result:</strong> Did chip appear? (Yes/No)</li>
+            <li><strong>Console Errors:</strong> (Copy all error messages)</li>
+            <li><strong>Screenshots:</strong> (Attach screenshots from Steps 5 & 6)</li>
+            <li><strong>Debug Results:</strong> (Results from Debug 1-4)</li>
+            <li><strong>Browser:</strong> (Chrome/Firefox/Safari + version)</li>
+            <li><strong>Unexpected Behavior:</strong> (Describe anything unusual)</li>
+        </ul>
+    </div>
+
+    <h2>🐛 Common Issues to Look For</h2>
+    <ul>
+        <li>Dropdown appears but is positioned incorrectly (off-screen, wrong location)</li>
+        <li>Dropdown doesn't appear at all</li>
+        <li>Clicking items has no effect</li>
+        <li>Console shows React errors</li>
+        <li>Console shows "Cannot read property" errors</li>
+        <li>Items appear but are not clickable</li>
+        <li>Chips don't render after selection</li>
+    </ul>
+
+    <hr style="margin: 40px 0;">
+    <p style="text-align: center; color: #6b7280;">
+        <small>Generated for testing the Artist Dashboard Venue Contacts Combobox</small>
+    </p>
+</body>
+</html>

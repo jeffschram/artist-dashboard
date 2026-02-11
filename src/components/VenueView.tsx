@@ -2,9 +2,26 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
-import { Pencil, X, ExternalLink, MapPin, Users, Phone, Mail, Check, Plus, FolderKanban, Calendar, DollarSign } from "lucide-react";
+import {
+  Pencil,
+  X,
+  ExternalLink,
+  MapPin,
+  Users,
+  Phone,
+  Mail,
+  Check,
+  Plus,
+  FolderKanban,
+  Calendar,
+  DollarSign,
+} from "lucide-react";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 interface VenueViewProps {
   venueId: Id<"venues">;
@@ -14,37 +31,56 @@ interface VenueViewProps {
   onEditProject?: (projectId: Id<"projects">) => void;
 }
 
-function getStatusColor(status: string) {
+function getStatusBadgeClass(status: string) {
   switch (status) {
-    case "Contacted": return "bg-green-100 text-green-800";
-    case "To Contact": return "bg-yellow-100 text-yellow-800";
-    case "Ignore": return "bg-gray-100 text-gray-800";
-    case "Previous Client": return "bg-teal-100 text-teal-800";
-    default: return "bg-gray-100 text-gray-800";
+    case "Contacted":
+      return "bg-green-100 text-green-800 hover:bg-green-100";
+    case "To Contact":
+      return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
+    case "Ignore":
+      return "bg-gray-100 text-gray-800 hover:bg-gray-100";
+    case "Previous Client":
+      return "bg-teal-100 text-teal-800 hover:bg-teal-100";
+    default:
+      return "bg-gray-100 text-gray-800 hover:bg-gray-100";
   }
 }
 
-function getCategoryColor(category: string) {
+function getCategoryBadgeClass(category: string) {
   switch (category) {
-    case "Ultimate Dream Goal": return "bg-purple-100 text-purple-800";
-    case "Accessible": return "bg-blue-100 text-blue-800";
-    case "Unconventional": return "bg-orange-100 text-orange-800";
-    default: return "bg-gray-100 text-gray-800";
+    case "Ultimate Dream Goal":
+      return "bg-purple-100 text-purple-800 hover:bg-purple-100";
+    case "Accessible":
+      return "bg-blue-100 text-blue-800 hover:bg-blue-100";
+    case "Unconventional":
+      return "bg-orange-100 text-orange-800 hover:bg-orange-100";
+    default:
+      return "bg-gray-100 text-gray-800 hover:bg-gray-100";
   }
 }
 
-function formatLocation(loc: { city?: string; state?: string; country?: string; phoneNumber?: string }) {
+function formatLocation(loc: {
+  city?: string;
+  state?: string;
+  country?: string;
+  phoneNumber?: string;
+}) {
   const parts = [loc.city, loc.state, loc.country].filter(Boolean);
   return parts.join(", ");
 }
 
-function getProjectStatusStyle(status: string) {
+function getProjectStatusBadgeClass(status: string) {
   switch (status) {
-    case "Planning": return "bg-blue-100 text-blue-800";
-    case "In Progress": return "bg-yellow-100 text-yellow-800";
-    case "Completed": return "bg-green-100 text-green-800";
-    case "Cancelled": return "bg-gray-100 text-gray-600";
-    default: return "bg-gray-100 text-gray-800";
+    case "Planning":
+      return "bg-blue-100 text-blue-800 hover:bg-blue-100";
+    case "In Progress":
+      return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
+    case "Completed":
+      return "bg-green-100 text-green-800 hover:bg-green-100";
+    case "Cancelled":
+      return "bg-gray-100 text-gray-600 hover:bg-gray-100";
+    default:
+      return "bg-gray-100 text-gray-800 hover:bg-gray-100";
   }
 }
 
@@ -58,16 +94,23 @@ function formatCurrency(value: number | undefined) {
   }).format(value);
 }
 
-export function VenueView({ venueId, onEdit, onClose, onAddProject, onEditProject }: VenueViewProps) {
+export function VenueView({
+  venueId,
+  onEdit,
+  onClose,
+  onAddProject,
+  onEditProject,
+}: VenueViewProps) {
   const venue = useQuery(api.venues.get, { id: venueId });
   const venueProjects = useQuery(api.projects.listByVenue, { venueId });
   const venueContacts = useQuery(api.contacts.listByVenue, { venueId });
   const updateVenue = useMutation(api.venues.update);
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
+    "idle",
+  );
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Clean up timers on unmount
   useEffect(() => {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -79,7 +122,6 @@ export function VenueView({ venueId, onEdit, onClose, onAddProject, onEditProjec
     (markdown: string) => {
       if (!venue) return;
 
-      // Don't save if the value hasn't actually changed
       if (markdown === (venue.notes || "")) return;
 
       setSaveStatus("saving");
@@ -93,7 +135,7 @@ export function VenueView({ venueId, onEdit, onClose, onAddProject, onEditProjec
             url: venue.url,
             submissionFormUrl: venue.submissionFormUrl,
             locations: venue.locations,
-            contacts: venue.contacts || [], // legacy
+            contacts: venue.contacts || [],
             contactIds: venue.contactIds || [],
             status: venue.status,
             category: venue.category,
@@ -114,14 +156,14 @@ export function VenueView({ venueId, onEdit, onClose, onAddProject, onEditProjec
   if (venue === undefined) {
     return (
       <div className="flex justify-center items-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   if (venue === null) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-500">
+      <div className="flex items-center justify-center h-full text-muted-foreground">
         <p>Venue not found.</p>
       </div>
     );
@@ -133,42 +175,41 @@ export function VenueView({ venueId, onEdit, onClose, onAddProject, onEditProjec
 
   const contactsWithData = venueContacts || [];
 
+  const projectsWithData = venueProjects || [];
+
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="p-6 border-b border-gray-200 bg-white">
+      <div className="p-6 border-b bg-background">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <h2 className="text-xl font-semibold text-gray-900 truncate">
-              {venue.name}
-            </h2>
+            <h2 className="text-xl font-semibold truncate">{venue.name}</h2>
             <div className="flex flex-wrap gap-2 mt-2">
-              <span
-                className={`px-2.5 py-1 text-xs font-medium rounded-full ${getStatusColor(venue.status)}`}
+              <Badge
+                variant="secondary"
+                className={cn("border-0", getStatusBadgeClass(venue.status))}
               >
                 {venue.status}
-              </span>
-              <span
-                className={`px-2.5 py-1 text-xs font-medium rounded-full ${getCategoryColor(venue.category)}`}
+              </Badge>
+              <Badge
+                variant="secondary"
+                className={cn(
+                  "border-0",
+                  getCategoryBadgeClass(venue.category),
+                )}
               >
                 {venue.category}
-              </span>
+              </Badge>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={onEdit}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Pencil size={16} />
+            <Button onClick={onEdit} size="sm">
+              <Pencil className="h-4 w-4" />
               Edit
-            </button>
-            <button
-              onClick={onClose}
-              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <X size={18} />
-            </button>
+            </Button>
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </div>
@@ -177,17 +218,19 @@ export function VenueView({ venueId, onEdit, onClose, onAddProject, onEditProjec
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {/* Links */}
         {(venue.url || venue.submissionFormUrl) && (
-          <div className="bg-white p-6 rounded-lg border border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900 mb-3">Links</h3>
-            <div className="space-y-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Links</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
               {venue.url && (
                 <a
                   href={venue.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors"
+                  className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors"
                 >
-                  <ExternalLink size={15} />
+                  <ExternalLink className="h-4 w-4" />
                   <span className="truncate">{venue.url}</span>
                 </a>
               )}
@@ -196,141 +239,131 @@ export function VenueView({ venueId, onEdit, onClose, onAddProject, onEditProjec
                   href={venue.submissionFormUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors"
+                  className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors"
                 >
-                  <ExternalLink size={15} />
+                  <ExternalLink className="h-4 w-4" />
                   <span className="truncate">
                     Submission Form: {venue.submissionFormUrl}
                   </span>
                 </a>
               )}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Locations */}
         {locationsWithData.length > 0 && (
-          <div className="bg-white p-6 rounded-lg border border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900 mb-3">
-              Locations
-            </h3>
-            <div className="space-y-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Locations</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
               {locationsWithData.map((loc, i) => (
                 <div key={i} className="flex items-start gap-2">
-                  <MapPin
-                    size={15}
-                    className="text-gray-400 mt-0.5 shrink-0"
-                  />
+                  <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                   <div>
-                    <span className="text-gray-900">
-                      {formatLocation(loc)}
-                    </span>
+                    <span>{formatLocation(loc)}</span>
                     {loc.phoneNumber && (
-                      <span className="flex items-center gap-1 text-sm text-gray-500 mt-0.5">
-                        <Phone size={12} />
+                      <span className="flex items-center gap-1 text-sm text-muted-foreground mt-0.5">
+                        <Phone className="h-3 w-3" />
                         {loc.phoneNumber}
                       </span>
                     )}
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Contacts */}
         {contactsWithData.length > 0 && (
-          <div className="bg-white p-6 rounded-lg border border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900 mb-3">
-              Contacts
-            </h3>
-            <div className="space-y-3">
+          <Card>
+            <CardHeader>
+              <CardTitle>Contacts</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
               {contactsWithData.map((contact) => (
                 <div
                   key={contact._id}
-                  className="p-3 bg-gray-50 rounded-lg border border-gray-100"
+                  className="p-3 bg-muted rounded-lg border"
                 >
                   <div className="flex items-center gap-2">
-                    <Users size={14} className="text-gray-400" />
-                    <span className="font-medium text-gray-900">
-                      {contact.name}
-                    </span>
+                    <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="font-medium">{contact.name}</span>
                   </div>
                   {contact.role && (
-                    <p className="text-sm text-gray-600 ml-[22px]">
+                    <p className="text-sm text-muted-foreground ml-[22px]">
                       {contact.role}
                     </p>
                   )}
                   {contact.email && (
                     <a
                       href={`mailto:${contact.email}`}
-                      className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 mt-1 ml-[22px]"
+                      className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 mt-1 ml-[22px]"
                     >
-                      <Mail size={12} />
+                      <Mail className="h-3 w-3" />
                       {contact.email}
                     </a>
                   )}
                   {contact.phone && (
-                    <p className="flex items-center gap-2 text-sm text-gray-500 mt-1 ml-[22px]">
-                      <Phone size={12} />
+                    <p className="flex items-center gap-2 text-sm text-muted-foreground mt-1 ml-[22px]">
+                      <Phone className="h-3 w-3" />
                       {contact.phone}
                     </p>
                   )}
                   {contact.notes && (
-                    <p className="text-sm text-gray-500 mt-1 ml-[22px]">
+                    <p className="text-sm text-muted-foreground mt-1 ml-[22px]">
                       {contact.notes}
                     </p>
                   )}
                 </div>
               ))}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         )}
 
-        {/* Projects — only for Previous Client venues */}
-        {venue.status === "Previous Client" && (
-          <div className="bg-white p-6 rounded-lg border border-gray-200">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2">
-                <FolderKanban size={18} className="text-gray-400" />
+        {/* Projects */}
+        {projectsWithData.length > 0 && (
+          <Card>
+            <CardHeader className="flex-row items-center justify-between space-y-0">
+              <CardTitle className="flex items-center gap-2">
+                <FolderKanban className="h-4 w-4 text-muted-foreground" />
                 Projects
-              </h3>
-              {onAddProject && (
-                <button
-                  onClick={() => onAddProject(venueId)}
-                  className="flex items-center gap-1 px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  <Plus size={14} />
-                  Add Project
-                </button>
-              )}
-            </div>
-            {venueProjects && venueProjects.length > 0 ? (
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
               <div className="space-y-2">
-                {venueProjects.map((project) => (
+                {projectsWithData.map((project) => (
                   <button
                     key={project._id}
                     onClick={() => onEditProject?.(project._id)}
-                    className="w-full text-left p-3 bg-gray-50 rounded-lg border border-gray-100 hover:border-blue-300 hover:bg-blue-50/30 transition-all group"
+                    className="w-full text-left p-3 bg-muted rounded-lg border hover:border-primary/30 hover:bg-primary/5 transition-all group"
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <span className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
+                      <span className="font-medium group-hover:text-primary transition-colors">
                         {project.name}
                       </span>
-                      <span className={`shrink-0 px-2 py-0.5 text-xs font-medium rounded-full ${getProjectStatusStyle(project.status)}`}>
+                      <Badge
+                        variant="secondary"
+                        className={cn(
+                          "border-0 shrink-0",
+                          getProjectStatusBadgeClass(project.status),
+                        )}
+                      >
                         {project.status}
-                      </span>
+                      </Badge>
                     </div>
-                    <div className="flex items-center gap-4 text-xs text-gray-400 mt-1.5">
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1.5">
                       {(project.startDate || project.endDate) && (
                         <span className="flex items-center gap-1">
-                          <Calendar size={11} />
+                          <Calendar className="h-3 w-3" />
                           {project.startDate || "?"} — {project.endDate || "?"}
                         </span>
                       )}
                       {formatCurrency(project.budget) && (
                         <span className="flex items-center gap-1">
-                          <DollarSign size={11} />
+                          <DollarSign className="h-3 w-3" />
                           {formatCurrency(project.budget)}
                         </span>
                       )}
@@ -338,36 +371,34 @@ export function VenueView({ venueId, onEdit, onClose, onAddProject, onEditProjec
                   </button>
                 ))}
               </div>
-            ) : (
-              <p className="text-sm text-gray-500">
-                No projects yet. Add one to track your work with this venue.
-              </p>
-            )}
-          </div>
+            </CardContent>
+          </Card>
         )}
 
-        {/* Notes - always shown with editable markdown editor */}
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-medium text-gray-900">Notes</h3>
+        {/* Notes */}
+        <Card>
+          <CardHeader className="flex-row items-center justify-between space-y-0">
+            <CardTitle>Notes</CardTitle>
             {saveStatus === "saving" && (
-              <span className="text-xs text-gray-400 animate-pulse">
+              <span className="text-xs text-muted-foreground animate-pulse">
                 Saving...
               </span>
             )}
             {saveStatus === "saved" && (
               <span className="flex items-center gap-1 text-xs text-green-600">
-                <Check size={12} />
+                <Check className="h-3 w-3" />
                 Saved
               </span>
             )}
-          </div>
-          <MarkdownEditor
-            content={venue.notes || ""}
-            onChange={handleNotesChange}
-            placeholder="Add your notes about this venue..."
-          />
-        </div>
+          </CardHeader>
+          <CardContent>
+            <MarkdownEditor
+              content={venue.notes || ""}
+              onChange={handleNotesChange}
+              placeholder="Add your notes about this venue..."
+            />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

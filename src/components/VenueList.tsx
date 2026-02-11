@@ -3,6 +3,9 @@ import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { Plus, GripVertical, ExternalLink, Search } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface Venue {
   _id: Id<"venues">;
@@ -20,30 +23,20 @@ interface VenueListProps {
   onCreateNew: () => void;
 }
 
+function getCategoryBadgeClass(category: string) {
+  switch (category) {
+    case "Ultimate Dream Goal": return "bg-purple-100 text-purple-800 hover:bg-purple-100";
+    case "Accessible": return "bg-blue-100 text-blue-800 hover:bg-blue-100";
+    case "Unconventional": return "bg-orange-100 text-orange-800 hover:bg-orange-100";
+    default: return "bg-gray-100 text-gray-800 hover:bg-gray-100";
+  }
+}
+
 export function VenueList({ venues, selectedVenueId, onVenueSelect, onCreateNew }: VenueListProps) {
   const [draggedItem, setDraggedItem] = useState<Id<"venues"> | null>(null);
   const reorderVenue = useMutation(api.venues.reorder);
 
   const sortedVenues = [...venues].sort((a, b) => a.orderNum - b.orderNum);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Contacted": return "bg-green-100 text-green-800";
-      case "To Contact": return "bg-yellow-100 text-yellow-800";
-      case "Ignore": return "bg-gray-100 text-gray-800";
-      case "Previous Client": return "bg-teal-100 text-teal-800";
-      default: return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case "Ultimate Dream Goal": return "bg-purple-100 text-purple-800";
-      case "Accessible": return "bg-blue-100 text-blue-800";
-      case "Unconventional": return "bg-orange-100 text-orange-800";
-      default: return "bg-gray-100 text-gray-800";
-    }
-  };
 
   const handleDragStart = (e: React.DragEvent, venueId: Id<"venues">) => {
     setDraggedItem(venueId);
@@ -76,18 +69,15 @@ export function VenueList({ venues, selectedVenueId, onVenueSelect, onCreateNew 
 
   return (
     <div className="h-full flex flex-col">
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Venues</h2>
-          <span className="text-sm text-gray-500">{venues.length} total</span>
+          <h2 className="text-lg font-semibold">Venues</h2>
+          <span className="text-sm text-muted-foreground">{venues.length} total</span>
         </div>
-        <button
-          onClick={onCreateNew}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Plus size={16} />
+        <Button onClick={onCreateNew} className="w-full">
+          <Plus className="h-4 w-4" />
           Add New Venue
-        </button>
+        </Button>
       </div>
 
       <div className="flex-1 overflow-y-auto">
@@ -99,32 +89,34 @@ export function VenueList({ venues, selectedVenueId, onVenueSelect, onCreateNew 
             onDragOver={handleDragOver}
             onDrop={(e) => handleDrop(e, venue._id)}
             onClick={() => onVenueSelect(venue._id)}
-            className={`flex items-center gap-2 px-3 py-2 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
-              selectedVenueId === venue._id ? "bg-blue-50 border-blue-200" : ""
-            } ${draggedItem === venue._id ? "opacity-50" : ""}`}
+            className={cn(
+              "flex items-center gap-2 px-3 py-2 border-b cursor-pointer hover:bg-muted transition-colors",
+              selectedVenueId === venue._id && "bg-primary/5 border-primary/20",
+              draggedItem === venue._id && "opacity-50",
+            )}
           >
-            <div className="cursor-grab active:cursor-grabbing shrink-0 text-gray-400">
-              <GripVertical size={14} />
+            <div className="cursor-grab active:cursor-grabbing shrink-0 text-muted-foreground">
+              <GripVertical className="h-3.5 w-3.5" />
             </div>
-            <span className="shrink-0 text-[10px] text-gray-400 tabular-nums w-5 text-right">
+            <span className="shrink-0 text-[10px] text-muted-foreground tabular-nums w-5 text-right">
               {venue.orderNum}
             </span>
-            <h3 className="font-medium text-sm text-gray-900 truncate min-w-0 flex-1">
+            <h3 className="font-medium text-sm truncate min-w-0 flex-1">
               {venue.name}
             </h3>
-            <span className={`shrink-0 px-1.5 py-0.5 text-[10px] font-medium rounded ${getCategoryColor(venue.category)}`}>
+            <Badge variant="secondary" className={cn("shrink-0 text-[10px] px-1.5 py-0 border-0", getCategoryBadgeClass(venue.category))}>
               {venue.category}
-            </span>
+            </Badge>
             {venue.url ? (
               <a
                 href={venue.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="shrink-0 p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                className="shrink-0 p-1 text-muted-foreground hover:text-primary transition-colors"
                 title={venue.url}
               >
-                <ExternalLink size={12} />
+                <ExternalLink className="h-3 w-3" />
               </a>
             ) : (
               <a
@@ -132,18 +124,17 @@ export function VenueList({ venues, selectedVenueId, onVenueSelect, onCreateNew 
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="shrink-0 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                className="shrink-0 p-1 text-muted-foreground hover:text-foreground transition-colors"
                 title={`Search Google for "${venue.name}"`}
               >
-                <Search size={12} />
+                <Search className="h-3 w-3" />
               </a>
             )}
           </div>
         ))}
 
         {venues.length === 0 && (
-          <div className="p-8 text-center text-gray-500">
-            <div className="text-4xl mb-4">🏛️</div>
+          <div className="p-8 text-center text-muted-foreground">
             <p className="text-lg mb-2">No venues yet</p>
             <p className="text-sm">Click "Add New Venue" to get started</p>
           </div>

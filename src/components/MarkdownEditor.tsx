@@ -18,39 +18,14 @@ import {
   Link as LinkIcon,
   Minus,
 } from "lucide-react";
+import { Toggle } from "@/components/ui/toggle";
+import { Separator } from "@/components/ui/separator";
 
 interface MarkdownEditorProps {
   content: string;
   onChange: (markdown: string) => void;
   placeholder?: string;
   editable?: boolean;
-}
-
-function ToolbarButton({
-  onClick,
-  isActive,
-  children,
-  title,
-}: {
-  onClick: () => void;
-  isActive?: boolean;
-  children: React.ReactNode;
-  title: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={title}
-      className={`p-1.5 rounded transition-colors ${
-        isActive
-          ? "bg-blue-100 text-blue-700"
-          : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-      }`}
-    >
-      {children}
-    </button>
-  );
 }
 
 function Toolbar({ editor }: { editor: ReturnType<typeof useEditor> }) {
@@ -76,102 +51,115 @@ function Toolbar({ editor }: { editor: ReturnType<typeof useEditor> }) {
   }, [editor]);
 
   return (
-    <div className="flex flex-wrap items-center gap-0.5 px-3 py-2 border-b border-gray-200 bg-gray-50 rounded-t-lg">
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleBold().run()}
-        isActive={editor.isActive("bold")}
-        title="Bold"
+    <div className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 border-b bg-muted/50 rounded-t-lg">
+      <Toggle
+        size="sm"
+        pressed={editor.isActive("bold")}
+        onPressedChange={() => editor.chain().focus().toggleBold().run()}
+        aria-label="Bold"
       >
-        <Bold size={15} />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleItalic().run()}
-        isActive={editor.isActive("italic")}
-        title="Italic"
+        <Bold className="h-4 w-4" />
+      </Toggle>
+      <Toggle
+        size="sm"
+        pressed={editor.isActive("italic")}
+        onPressedChange={() => editor.chain().focus().toggleItalic().run()}
+        aria-label="Italic"
       >
-        <Italic size={15} />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleStrike().run()}
-        isActive={editor.isActive("strike")}
-        title="Strikethrough"
+        <Italic className="h-4 w-4" />
+      </Toggle>
+      <Toggle
+        size="sm"
+        pressed={editor.isActive("strike")}
+        onPressedChange={() => editor.chain().focus().toggleStrike().run()}
+        aria-label="Strikethrough"
       >
-        <Strikethrough size={15} />
-      </ToolbarButton>
+        <Strikethrough className="h-4 w-4" />
+      </Toggle>
 
-      <div className="w-px h-5 bg-gray-300 mx-1" />
+      <Separator orientation="vertical" className="mx-1 h-5" />
 
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-        isActive={editor.isActive("heading", { level: 1 })}
-        title="Heading 1"
+      <Toggle
+        size="sm"
+        pressed={editor.isActive("heading", { level: 1 })}
+        onPressedChange={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+        aria-label="Heading 1"
       >
-        <Heading1 size={15} />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        isActive={editor.isActive("heading", { level: 2 })}
-        title="Heading 2"
+        <Heading1 className="h-4 w-4" />
+      </Toggle>
+      <Toggle
+        size="sm"
+        pressed={editor.isActive("heading", { level: 2 })}
+        onPressedChange={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+        aria-label="Heading 2"
       >
-        <Heading2 size={15} />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-        isActive={editor.isActive("heading", { level: 3 })}
-        title="Heading 3"
+        <Heading2 className="h-4 w-4" />
+      </Toggle>
+      <Toggle
+        size="sm"
+        pressed={editor.isActive("heading", { level: 3 })}
+        onPressedChange={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+        aria-label="Heading 3"
       >
-        <Heading3 size={15} />
-      </ToolbarButton>
+        <Heading3 className="h-4 w-4" />
+      </Toggle>
 
-      <div className="w-px h-5 bg-gray-300 mx-1" />
+      <Separator orientation="vertical" className="mx-1 h-5" />
 
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleBulletList().run()}
-        isActive={editor.isActive("bulletList")}
-        title="Bullet List"
+      <Toggle
+        size="sm"
+        pressed={editor.isActive("bulletList")}
+        onPressedChange={() => editor.chain().focus().toggleBulletList().run()}
+        aria-label="Bullet List"
       >
-        <List size={15} />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        isActive={editor.isActive("orderedList")}
-        title="Ordered List"
+        <List className="h-4 w-4" />
+      </Toggle>
+      <Toggle
+        size="sm"
+        pressed={editor.isActive("orderedList")}
+        onPressedChange={() => editor.chain().focus().toggleOrderedList().run()}
+        aria-label="Ordered List"
       >
-        <ListOrdered size={15} />
-      </ToolbarButton>
+        <ListOrdered className="h-4 w-4" />
+      </Toggle>
 
-      <div className="w-px h-5 bg-gray-300 mx-1" />
+      <Separator orientation="vertical" className="mx-1 h-5" />
 
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleBlockquote().run()}
-        isActive={editor.isActive("blockquote")}
-        title="Blockquote"
+      <Toggle
+        size="sm"
+        pressed={editor.isActive("blockquote")}
+        onPressedChange={() => editor.chain().focus().toggleBlockquote().run()}
+        aria-label="Blockquote"
       >
-        <Quote size={15} />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-        isActive={editor.isActive("codeBlock")}
-        title="Code Block"
+        <Quote className="h-4 w-4" />
+      </Toggle>
+      <Toggle
+        size="sm"
+        pressed={editor.isActive("codeBlock")}
+        onPressedChange={() => editor.chain().focus().toggleCodeBlock().run()}
+        aria-label="Code Block"
       >
-        <Code size={15} />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().setHorizontalRule().run()}
-        title="Horizontal Rule"
+        <Code className="h-4 w-4" />
+      </Toggle>
+      <Toggle
+        size="sm"
+        pressed={false}
+        onPressedChange={() => editor.chain().focus().setHorizontalRule().run()}
+        aria-label="Horizontal Rule"
       >
-        <Minus size={15} />
-      </ToolbarButton>
+        <Minus className="h-4 w-4" />
+      </Toggle>
 
-      <div className="w-px h-5 bg-gray-300 mx-1" />
+      <Separator orientation="vertical" className="mx-1 h-5" />
 
-      <ToolbarButton
-        onClick={setLink}
-        isActive={editor.isActive("link")}
-        title="Link"
+      <Toggle
+        size="sm"
+        pressed={editor.isActive("link")}
+        onPressedChange={setLink}
+        aria-label="Link"
       >
-        <LinkIcon size={15} />
-      </ToolbarButton>
+        <LinkIcon className="h-4 w-4" />
+      </Toggle>
     </div>
   );
 }
@@ -190,7 +178,7 @@ export function MarkdownEditor({
       Link.configure({
         openOnClick: !editable,
         HTMLAttributes: {
-          class: "text-blue-600 underline hover:text-blue-800 cursor-pointer",
+          class: "text-primary underline hover:text-primary/80 cursor-pointer",
         },
       }),
       Placeholder.configure({
@@ -208,7 +196,6 @@ export function MarkdownEditor({
     },
   });
 
-  // Sync external content changes (e.g. switching venues)
   useEffect(() => {
     if (!editor) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -220,7 +207,6 @@ export function MarkdownEditor({
     }
   }, [content, editor]);
 
-  // Sync editable prop
   useEffect(() => {
     if (editor) {
       editor.setEditable(editable);
@@ -228,7 +214,7 @@ export function MarkdownEditor({
   }, [editable, editor]);
 
   return (
-    <div className="border border-gray-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
+    <div className="border rounded-lg overflow-hidden focus-within:ring-1 focus-within:ring-ring">
       {editable && <Toolbar editor={editor} />}
       <EditorContent
         editor={editor}
@@ -241,11 +227,11 @@ export function MarkdownEditor({
           [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ul]:my-1
           [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_ol]:my-1
           [&_.tiptap_li]:my-0.5
-          [&_.tiptap_blockquote]:border-l-4 [&_.tiptap_blockquote]:border-gray-300 [&_.tiptap_blockquote]:pl-3 [&_.tiptap_blockquote]:italic [&_.tiptap_blockquote]:text-gray-600 [&_.tiptap_blockquote]:my-2
-          [&_.tiptap_pre]:bg-gray-100 [&_.tiptap_pre]:p-3 [&_.tiptap_pre]:rounded [&_.tiptap_pre]:my-2 [&_.tiptap_pre]:text-sm [&_.tiptap_pre]:font-mono
-          [&_.tiptap_code]:bg-gray-100 [&_.tiptap_code]:px-1 [&_.tiptap_code]:rounded [&_.tiptap_code]:text-sm [&_.tiptap_code]:font-mono
-          [&_.tiptap_hr]:border-gray-300 [&_.tiptap_hr]:my-3
-          [&_.tiptap_.is-editor-empty:first-child::before]:text-gray-400 [&_.tiptap_.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_.tiptap_.is-editor-empty:first-child::before]:float-left [&_.tiptap_.is-editor-empty:first-child::before]:pointer-events-none [&_.tiptap_.is-editor-empty:first-child::before]:h-0
+          [&_.tiptap_blockquote]:border-l-4 [&_.tiptap_blockquote]:border-border [&_.tiptap_blockquote]:pl-3 [&_.tiptap_blockquote]:italic [&_.tiptap_blockquote]:text-muted-foreground [&_.tiptap_blockquote]:my-2
+          [&_.tiptap_pre]:bg-muted [&_.tiptap_pre]:p-3 [&_.tiptap_pre]:rounded [&_.tiptap_pre]:my-2 [&_.tiptap_pre]:text-sm [&_.tiptap_pre]:font-mono
+          [&_.tiptap_code]:bg-muted [&_.tiptap_code]:px-1 [&_.tiptap_code]:rounded [&_.tiptap_code]:text-sm [&_.tiptap_code]:font-mono
+          [&_.tiptap_hr]:border-border [&_.tiptap_hr]:my-3
+          [&_.tiptap_.is-editor-empty:first-child::before]:text-muted-foreground [&_.tiptap_.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_.tiptap_.is-editor-empty:first-child::before]:float-left [&_.tiptap_.is-editor-empty:first-child::before]:pointer-events-none [&_.tiptap_.is-editor-empty:first-child::before]:h-0
         `}
       />
     </div>

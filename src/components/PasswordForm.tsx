@@ -1,5 +1,9 @@
 import { useState } from "react";
 import { Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface PasswordFormProps {
   onAuthenticated: () => void;
@@ -27,45 +31,39 @@ export function PasswordForm({ onAuthenticated }: PasswordFormProps) {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <div className="w-full max-w-md mx-auto p-6">
-        <div className="text-center mb-8">
-          <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-            <Lock className="w-6 h-6 text-blue-600" />
+    <div className="flex items-center justify-center min-h-screen bg-muted/40">
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader className="text-center">
+          <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-2">
+            <Lock className="w-6 h-6 text-primary" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Artist Dashboard</h1>
-          <p className="text-gray-600">Enter password to access your venues</p>
-        </div>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg bg-white border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-shadow shadow-sm hover:shadow"
-              placeholder="Enter password"
-              required
-            />
-          </div>
-          
-          {error && (
-            <div className="text-red-600 text-sm">{error}</div>
-          )}
-          
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full px-4 py-3 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? "Checking..." : "Access Dashboard"}
-          </button>
-        </form>
-      </div>
+          <CardTitle className="text-3xl">Artist Dashboard</CardTitle>
+          <CardDescription>Enter password to access your venues</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter password"
+                required
+              />
+            </div>
+            
+            {error && (
+              <div className="text-destructive text-sm">{error}</div>
+            )}
+            
+            <Button type="submit" disabled={isLoading} className="w-full">
+              {isLoading ? "Checking..." : "Access Dashboard"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

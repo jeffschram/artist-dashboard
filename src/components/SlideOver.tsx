@@ -1,4 +1,9 @@
-import { useEffect, useRef } from "react";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 
 interface SlideOverProps {
   isOpen: boolean;
@@ -7,40 +12,14 @@ interface SlideOverProps {
 }
 
 export function SlideOver({ isOpen, onClose, children }: SlideOverProps) {
-  const panelRef = useRef<HTMLDivElement>(null);
-
-  // Close on Escape key
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
-
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className={`fixed inset-0 bg-black/20 z-40 transition-opacity duration-300 ${
-          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
-        onClick={onClose}
-      />
-
-      {/* Panel */}
-      <div
-        ref={panelRef}
-        className={`SlideOver fixed top-0 right-0 h-full z-50 bg-gray-50 shadow-2xl border-l border-gray-200
-          transition-transform duration-300 ease-in-out
-          w-[min(560px,90vw)]
-          z-[1000]
-          ${isOpen ? "translate-x-0" : "translate-x-full"}
-        `}
-      >
-        {isOpen && children}
-      </div>
-    </>
+    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent side="right" className="p-0 w-[min(560px,90vw)] sm:max-w-[560px] overflow-hidden">
+        <VisuallyHidden.Root>
+          <SheetTitle>Panel</SheetTitle>
+        </VisuallyHidden.Root>
+        {children}
+      </SheetContent>
+    </Sheet>
   );
 }

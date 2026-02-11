@@ -2,6 +2,8 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Id } from "../../convex/_generated/dataModel";
 import { MapPin, Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 type Status = "Contacted" | "To Contact" | "Ignore" | "Previous Client";
 type Category = "Ultimate Dream Goal" | "Accessible" | "Unconventional";
@@ -30,20 +32,20 @@ interface VenueCardProps {
   isDragOverlay?: boolean;
 }
 
-function getStatusColor(status: Status) {
+function getStatusBadgeClass(status: Status) {
   switch (status) {
-    case "Contacted": return "bg-green-100 text-green-800";
-    case "To Contact": return "bg-yellow-100 text-yellow-800";
-    case "Ignore": return "bg-gray-100 text-gray-600";
-    case "Previous Client": return "bg-teal-100 text-teal-800";
+    case "Contacted": return "bg-green-100 text-green-800 hover:bg-green-100";
+    case "To Contact": return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
+    case "Ignore": return "bg-gray-100 text-gray-600 hover:bg-gray-100";
+    case "Previous Client": return "bg-teal-100 text-teal-800 hover:bg-teal-100";
   }
 }
 
-function getCategoryColor(category: Category) {
+function getCategoryBadgeClass(category: Category) {
   switch (category) {
-    case "Ultimate Dream Goal": return "bg-purple-100 text-purple-800";
-    case "Accessible": return "bg-blue-100 text-blue-800";
-    case "Unconventional": return "bg-orange-100 text-orange-800";
+    case "Ultimate Dream Goal": return "bg-purple-100 text-purple-800 hover:bg-purple-100";
+    case "Accessible": return "bg-blue-100 text-blue-800 hover:bg-blue-100";
+    case "Unconventional": return "bg-orange-100 text-orange-800 hover:bg-orange-100";
   }
 }
 
@@ -102,7 +104,7 @@ export function VenueCard({
       <div
         ref={setNodeRef}
         style={style}
-        className="border-l-[3px] rounded-lg border-2 border-dashed border-blue-200 bg-blue-50/50 p-3 h-[76px]"
+        className="border-l-[3px] rounded-lg border-2 border-dashed border-primary/30 bg-primary/5 p-3 h-[76px]"
       />
     );
   }
@@ -116,13 +118,13 @@ export function VenueCard({
   // Show the badge for the axis NOT being grouped
   const badge =
     groupBy === "category" ? (
-      <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded-full ${getStatusColor(venue.status)}`}>
+      <Badge variant="secondary" className={cn("text-[10px] px-1.5 py-0 border-0 font-medium", getStatusBadgeClass(venue.status))}>
         {venue.status}
-      </span>
+      </Badge>
     ) : (
-      <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded-full ${getCategoryColor(venue.category)}`}>
+      <Badge variant="secondary" className={cn("text-[10px] px-1.5 py-0 border-0 font-medium", getCategoryBadgeClass(venue.category))}>
         {venue.category}
-      </span>
+      </Badge>
     );
 
   const notesPreview = venue.notes
@@ -138,24 +140,23 @@ export function VenueCard({
       {...attributes}
       {...listeners}
       onClick={onClick}
-      className={`
-        border-l-[3px] bg-white rounded-lg border border-gray-200 p-3 cursor-pointer
-        select-none transition-shadow duration-150
-        ${getAccentBorder(groupBy, venue)}
-        ${isDragOverlay ? "shadow-xl" : "hover:shadow-md"}
-        ${isSelected ? "ring-2 ring-blue-500 border-blue-300" : ""}
-      `}
+      className={cn(
+        "border-l-[3px] bg-card rounded-lg border p-3 cursor-pointer select-none transition-shadow duration-150",
+        getAccentBorder(groupBy, venue),
+        isDragOverlay ? "shadow-xl" : "hover:shadow-md",
+        isSelected && "ring-2 ring-primary border-primary/50",
+      )}
     >
       {/* Name */}
-      <h4 className="font-medium text-sm text-gray-900 truncate leading-tight">
+      <h4 className="font-medium text-sm truncate leading-tight">
         {venue.name}
       </h4>
 
       {/* Location + badge row */}
       <div className="flex items-center justify-between gap-2 mt-1.5">
         {locationLabel ? (
-          <span className="flex items-center gap-1 text-xs text-gray-500 truncate min-w-0">
-            <MapPin size={11} className="shrink-0" />
+          <span className="flex items-center gap-1 text-xs text-muted-foreground truncate min-w-0">
+            <MapPin className="h-3 w-3 shrink-0" />
             <span className="truncate">{locationLabel}</span>
           </span>
         ) : (
@@ -167,13 +168,13 @@ export function VenueCard({
       {/* Bottom row: contacts + notes preview */}
       <div className="flex items-center gap-2 mt-1.5">
         {contactCount > 0 && (
-          <span className="flex items-center gap-0.5 text-[10px] text-gray-400">
-            <Users size={10} />
+          <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+            <Users className="h-2.5 w-2.5" />
             {contactCount}
           </span>
         )}
         {notesPreview && (
-          <span className="text-[11px] text-gray-400 truncate min-w-0">
+          <span className="text-[11px] text-muted-foreground truncate min-w-0">
             {notesPreview}
           </span>
         )}

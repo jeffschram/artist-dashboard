@@ -5,6 +5,29 @@ import { Id } from "../../convex/_generated/dataModel";
 import { X, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { MarkdownEditor } from "./MarkdownEditor";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Combobox,
+  ComboboxChips,
+  ComboboxChip,
+  ComboboxChipsInput,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxValue,
+  useComboboxAnchor,
+} from "@/components/ui/combobox";
 
 interface ProjectDetailProps {
   projectId: Id<"projects"> | null;
@@ -43,12 +66,13 @@ export function ProjectDetail({
     profit: "",
   });
   const [isSaving, setIsSaving] = useState(false);
+  const venuesAnchor = useComboboxAnchor();
 
   useEffect(() => {
     if (project && !isCreating) {
       setFormData({
         name: project.name,
-        venueIds: project.venueIds,
+        venueIds: project.venueIds || [],
         startDate: project.startDate || "",
         endDate: project.endDate || "",
         description: project.description || "",
@@ -124,15 +148,12 @@ export function ProjectDetail({
     }
   };
 
-  // Only show "Previous Client" venues in the dropdown
-  const previousClientVenues = (venues ?? []).filter(
-    (v) => v.status === "Previous Client",
-  );
+  const allVenues = venues ?? [];
 
   if (project === undefined && !isCreating) {
     return (
       <div className="flex justify-center items-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -140,212 +161,203 @@ export function ProjectDetail({
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="p-6 border-b border-gray-200 bg-white">
+      <div className="p-6 border-b bg-background">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-gray-900">
+          <h2 className="text-xl font-semibold">
             {isCreating ? "New Project" : "Edit Project"}
           </h2>
           <div className="flex items-center gap-2">
             {!isCreating && (
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={handleDelete}
-                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                title="Delete project"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
               >
-                <Trash2 size={18} />
-              </button>
+                <Trash2 className="h-4 w-4" />
+              </Button>
             )}
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-            >
-              <Save size={16} />
+            <Button onClick={handleSave} disabled={isSaving} size="sm">
+              <Save className="h-4 w-4" />
               {isSaving ? "Saving..." : "Save"}
-            </button>
-            <button
-              onClick={onClose}
-              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <X size={18} />
-            </button>
+            </Button>
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </div>
 
       {/* Body */}
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
-        <div className="bg-white p-6 rounded-lg border border-gray-200 space-y-4">
-          <h3 className="text-lg font-medium text-gray-900">Details</h3>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Project Name *
-            </label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, name: e.target.value }))
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter project name"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Venues * (select one or more)
-            </label>
-            {previousClientVenues.length === 0 ? (
-              <p className="text-xs text-gray-500 py-2">
-                No venues with "Previous Client" status. Mark a venue as
-                "Previous Client" first.
-              </p>
-            ) : (
-              <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-2 space-y-1">
-                {previousClientVenues.map((v) => (
-                  <label
-                    key={v._id}
-                    className="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 rounded cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={formData.venueIds.includes(v._id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setFormData((p) => ({
-                            ...p,
-                            venueIds: [...p.venueIds, v._id],
-                          }));
-                        } else {
-                          setFormData((p) => ({
-                            ...p,
-                            venueIds: p.venueIds.filter((id) => id !== v._id),
-                          }));
-                        }
-                      }}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-900">{v.name}</span>
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Status
-              </label>
-              <select
-                value={formData.status}
-                onChange={(e) =>
-                  setFormData((p) => ({
-                    ...p,
-                    status: e.target.value as ProjectStatus,
-                  }))
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="Planning">Planning</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Completed">Completed</option>
-                <option value="Cancelled">Cancelled</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Description
-              </label>
-              <input
+        <Card>
+          <CardHeader>
+            <CardTitle>Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Project Name *</Label>
+              <Input
                 type="text"
-                value={formData.description}
+                value={formData.name}
                 onChange={(e) =>
-                  setFormData((p) => ({ ...p, description: e.target.value }))
+                  setFormData((p) => ({ ...p, name: e.target.value }))
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Short description"
+                placeholder="Enter project name"
               />
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Start Date
-              </label>
-              <input
-                type="date"
-                value={formData.startDate}
-                onChange={(e) =>
-                  setFormData((p) => ({ ...p, startDate: e.target.value }))
+            <div className="space-y-2">
+              <Label>Venues * (select one or more)</Label>
+              <Combobox
+                multiple
+                items={allVenues.map((v) => v._id)}
+                itemToStringValue={(id) => {
+                  const v = allVenues.find((v) => v._id === id);
+                  return v?.name ?? "";
+                }}
+                value={formData.venueIds}
+                onValueChange={(ids) =>
+                  setFormData((p) => ({ ...p, venueIds: ids }))
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
+              >
+                <ComboboxChips ref={venuesAnchor}>
+                  <ComboboxValue>
+                    {(values: string[]) => (
+                      <>
+                        {values.map((id) => {
+                          const v = allVenues.find((v) => v._id === id);
+                          return (
+                            <ComboboxChip key={id}>
+                              {v?.name ?? "Unknown"}
+                            </ComboboxChip>
+                          );
+                        })}
+                        <ComboboxChipsInput placeholder="Search venues..." />
+                      </>
+                    )}
+                  </ComboboxValue>
+                </ComboboxChips>
+                <ComboboxContent anchor={venuesAnchor}>
+                  <ComboboxEmpty>No venues found.</ComboboxEmpty>
+                  <ComboboxList>
+                    {(id: string) => {
+                      const v = allVenues.find((v) => v._id === id);
+                      return (
+                        <ComboboxItem key={id} value={id}>
+                          {v?.name}
+                        </ComboboxItem>
+                      );
+                    }}
+                  </ComboboxList>
+                </ComboboxContent>
+              </Combobox>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                End Date
-              </label>
-              <input
-                type="date"
-                value={formData.endDate}
-                onChange={(e) =>
-                  setFormData((p) => ({ ...p, endDate: e.target.value }))
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Budget ($)
-              </label>
-              <input
-                type="number"
-                value={formData.budget}
-                onChange={(e) =>
-                  setFormData((p) => ({ ...p, budget: e.target.value }))
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="0.00"
-                min="0"
-                step="0.01"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(v) =>
+                    setFormData((p) => ({
+                      ...p,
+                      status: v as ProjectStatus,
+                    }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Planning">Planning</SelectItem>
+                    <SelectItem value="In Progress">In Progress</SelectItem>
+                    <SelectItem value="Completed">Completed</SelectItem>
+                    <SelectItem value="Cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Input
+                  type="text"
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, description: e.target.value }))
+                  }
+                  placeholder="Short description"
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Profit ($)
-              </label>
-              <input
-                type="number"
-                value={formData.profit}
-                onChange={(e) =>
-                  setFormData((p) => ({ ...p, profit: e.target.value }))
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="0.00"
-                step="0.01"
-              />
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Start Date</Label>
+                <Input
+                  type="date"
+                  value={formData.startDate}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, startDate: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>End Date</Label>
+                <Input
+                  type="date"
+                  value={formData.endDate}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, endDate: e.target.value }))
+                  }
+                />
+              </div>
             </div>
-          </div>
-        </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Budget ($)</Label>
+                <Input
+                  type="number"
+                  value={formData.budget}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, budget: e.target.value }))
+                  }
+                  placeholder="0.00"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Profit ($)</Label>
+                <Input
+                  type="number"
+                  value={formData.profit}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, profit: e.target.value }))
+                  }
+                  placeholder="0.00"
+                  step="0.01"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Notes */}
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Notes</h3>
-          <MarkdownEditor
-            content={formData.notes}
-            onChange={(markdown) =>
-              setFormData((p) => ({ ...p, notes: markdown }))
-            }
-            placeholder="Add project notes..."
-          />
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Notes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MarkdownEditor
+              content={formData.notes}
+              onChange={(markdown) =>
+                setFormData((p) => ({ ...p, notes: markdown }))
+              }
+              placeholder="Add project notes..."
+            />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

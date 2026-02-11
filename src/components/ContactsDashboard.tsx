@@ -4,9 +4,14 @@ import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { SlideOver } from "./SlideOver";
 import { ContactDetail } from "./ContactDetail";
-import { Plus, Search, Mail, Phone, Building2, UserCircle } from "lucide-react";
+import { ContactTable } from "./ContactTable";
+import { Plus, Search, Mail, Phone, Building2, UserCircle, LayoutGrid, Table as TableIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 type Mode = "idle" | "editing" | "creating";
+type ViewMode = "cards" | "table";
 
 export function ContactsDashboard() {
   const contacts = useQuery(api.contacts.list);
@@ -14,12 +19,13 @@ export function ContactsDashboard() {
   const [selectedContactId, setSelectedContactId] =
     useState<Id<"contacts"> | null>(null);
   const [mode, setMode] = useState<Mode>("idle");
+  const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [searchQuery, setSearchQuery] = useState("");
 
   if (contacts === undefined || venues === undefined) {
     return (
       <div className="flex justify-center items-center h-96">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -56,101 +62,126 @@ export function ContactsDashboard() {
   return (
     <div className="h-[calc(100vh-7rem)]">
       {/* Toolbar */}
-      <div className="px-6 py-4 bg-white border-b border-gray-200 flex items-center gap-4">
+      <div className="px-6 py-4 bg-background border-b flex items-center gap-4">
         <div className="relative flex-1 max-w-sm">
-          <Search
-            size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-          />
-          <input
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search contacts..."
-            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            className="pl-9"
           />
         </div>
 
-        <span className="text-sm text-gray-500">
+        {/* View mode toggle */}
+        <ToggleGroup
+          type="single"
+          value={viewMode}
+          onValueChange={(v) => v && setViewMode(v as ViewMode)}
+          variant="outline"
+          size="sm"
+        >
+          <ToggleGroupItem value="cards" aria-label="Cards view" className="gap-1.5 text-xs">
+            <LayoutGrid className="h-3.5 w-3.5" />
+            Cards
+          </ToggleGroupItem>
+          <ToggleGroupItem value="table" aria-label="Table view" className="gap-1.5 text-xs">
+            <TableIcon className="h-3.5 w-3.5" />
+            Table
+          </ToggleGroupItem>
+        </ToggleGroup>
+
+        <span className="text-sm text-muted-foreground">
           {filtered.length} contact{filtered.length !== 1 ? "s" : ""}
         </span>
 
-        <button
-          onClick={handleCreate}
-          className="ml-auto flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-        >
-          <Plus size={16} />
+        <Button onClick={handleCreate} size="sm" className="ml-auto">
+          <Plus className="h-4 w-4" />
           New Contact
-        </button>
+        </Button>
       </div>
 
       {/* Contact list */}
-      <div className="flex-1 overflow-y-auto p-6">
-        {filtered.length === 0 ? (
-          <div className="text-center py-16 text-gray-500">
-            <p className="text-lg font-medium">No contacts found</p>
-            <p className="text-sm mt-1">
-              {contacts.length === 0
-                ? 'Add your first contact by clicking "New Contact"'
-                : "Try adjusting your search"}
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map((contact) => {
-              const venueNames = (contact.venueIds || [])
-                .map((id) => venueMap.get(id))
-                .filter(Boolean);
-              return (
-                <button
-                  key={contact._id}
-                  onClick={() => handleSelect(contact._id)}
-                  className="text-left bg-white p-5 rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all group"
-                >
-                  <div className="flex items-start gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                      <UserCircle size={22} className="text-gray-400" />
+      {viewMode === "cards" && (
+        <div className="flex-1 overflow-y-auto p-6">
+          {filtered.length === 0 ? (
+            <div className="text-center py-16 text-muted-foreground">
+              <p className="text-lg font-medium">No contacts found</p>
+              <p className="text-sm mt-1">
+                {contacts.length === 0
+                  ? 'Add your first contact by clicking "New Contact"'
+                  : "Try adjusting your search"}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filtered.map((contact) => {
+                const venueNames = (contact.venueIds || [])
+                  .map((id) => venueMap.get(id))
+                  .filter(Boolean);
+                return (
+                  <button
+                    key={contact._id}
+                    onClick={() => handleSelect(contact._id)}
+                    className="text-left bg-card p-5 rounded-xl border hover:border-primary/30 hover:shadow-md transition-all group"
+                  >
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+                        <UserCircle className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="font-semibold group-hover:text-primary transition-colors truncate">
+                          {contact.name}
+                        </h3>
+                        {contact.role && (
+                          <p className="text-sm text-muted-foreground truncate">
+                            {contact.role}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
-                        {contact.name}
-                      </h3>
-                      {contact.role && (
-                        <p className="text-sm text-gray-500 truncate">
-                          {contact.role}
-                        </p>
+
+                    <div className="space-y-1.5 text-sm">
+                      {contact.email && (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Mail className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">{contact.email}</span>
+                        </div>
+                      )}
+                      {contact.phone && (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Phone className="h-3.5 w-3.5 shrink-0" />
+                          <span>{contact.phone}</span>
+                        </div>
+                      )}
+                      {venueNames.length > 0 && (
+                        <div className="flex items-center gap-2 text-muted-foreground pt-1 border-t mt-2">
+                          <Building2 className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">
+                            {venueNames.join(", ")}
+                          </span>
+                        </div>
                       )}
                     </div>
-                  </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
-                  <div className="space-y-1.5 text-sm">
-                    {contact.email && (
-                      <div className="flex items-center gap-2 text-gray-500">
-                        <Mail size={13} className="shrink-0" />
-                        <span className="truncate">{contact.email}</span>
-                      </div>
-                    )}
-                    {contact.phone && (
-                      <div className="flex items-center gap-2 text-gray-500">
-                        <Phone size={13} className="shrink-0" />
-                        <span>{contact.phone}</span>
-                      </div>
-                    )}
-                    {venueNames.length > 0 && (
-                      <div className="flex items-center gap-2 text-gray-400 pt-1 border-t border-gray-100 mt-2">
-                        <Building2 size={13} className="shrink-0" />
-                        <span className="truncate">
-                          {venueNames.join(", ")}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
+      {/* Contact table */}
+      {viewMode === "table" && (
+        <div className="flex-1 overflow-hidden">
+          <ContactTable
+            contacts={filtered}
+            venueMap={venueMap}
+            onContactSelect={handleSelect}
+          />
+        </div>
+      )}
 
       {/* Slide-over */}
       <SlideOver isOpen={mode !== "idle"} onClose={handleClose}>
