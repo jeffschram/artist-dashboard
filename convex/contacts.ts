@@ -11,7 +11,8 @@ export const list = query({
     phone: v.optional(v.string()),
     role: v.optional(v.string()),
     notes: v.optional(v.string()),
-    venueId: v.optional(v.id("venues")),
+    venueIds: v.optional(v.array(v.id("venues"))),
+    venueId: v.optional(v.id("venues")), // Legacy field - for transition period
     collaboratorId: v.optional(v.id("collaborators")),
   })),
   handler: async (ctx) => {
@@ -29,14 +30,13 @@ export const listByVenue = query({
     phone: v.optional(v.string()),
     role: v.optional(v.string()),
     notes: v.optional(v.string()),
-    venueId: v.optional(v.id("venues")),
+    venueIds: v.optional(v.array(v.id("venues"))),
+    venueId: v.optional(v.id("venues")), // Legacy field - for transition period
     collaboratorId: v.optional(v.id("collaborators")),
   })),
   handler: async (ctx, args) => {
-    return await ctx.db
-      .query("contacts")
-      .withIndex("by_venue", (q) => q.eq("venueId", args.venueId))
-      .collect();
+    const allContacts = await ctx.db.query("contacts").collect();
+    return allContacts.filter((c) => (c.venueIds || []).includes(args.venueId));
   },
 });
 
@@ -50,7 +50,8 @@ export const listByCollaborator = query({
     phone: v.optional(v.string()),
     role: v.optional(v.string()),
     notes: v.optional(v.string()),
-    venueId: v.optional(v.id("venues")),
+    venueIds: v.optional(v.array(v.id("venues"))),
+    venueId: v.optional(v.id("venues")), // Legacy field - for transition period
     collaboratorId: v.optional(v.id("collaborators")),
   })),
   handler: async (ctx, args) => {
@@ -71,7 +72,8 @@ export const get = query({
     phone: v.optional(v.string()),
     role: v.optional(v.string()),
     notes: v.optional(v.string()),
-    venueId: v.optional(v.id("venues")),
+    venueIds: v.optional(v.array(v.id("venues"))),
+    venueId: v.optional(v.id("venues")), // Legacy field - for transition period
     collaboratorId: v.optional(v.id("collaborators")),
   }),
   handler: async (ctx, args) => {
@@ -90,12 +92,15 @@ export const create = mutation({
     phone: v.optional(v.string()),
     role: v.optional(v.string()),
     notes: v.optional(v.string()),
-    venueId: v.optional(v.id("venues")),
+    venueIds: v.optional(v.array(v.id("venues"))),
     collaboratorId: v.optional(v.id("collaborators")),
   },
   returns: v.id("contacts"),
   handler: async (ctx, args) => {
-    return await ctx.db.insert("contacts", args);
+    return await ctx.db.insert("contacts", {
+      ...args,
+      venueIds: args.venueIds || [],
+    });
   },
 });
 
@@ -107,7 +112,7 @@ export const update = mutation({
     phone: v.optional(v.string()),
     role: v.optional(v.string()),
     notes: v.optional(v.string()),
-    venueId: v.optional(v.id("venues")),
+    venueIds: v.optional(v.array(v.id("venues"))),
     collaboratorId: v.optional(v.id("collaborators")),
   },
   returns: v.null(),
@@ -129,6 +134,15 @@ export const remove = mutation({
     const contact = await ctx.db.get(args.id);
     if (!contact) {
       throw new Error("Contact not found");
+    }
+    // Remove this contact from any venues that reference it
+    const venues = await ctx.db.query("venues").collect();
+    for (const venue of venues) {
+      if ((venue.contactIds || []).includes(args.id)) {
+        await ctx.db.patch(venue._id, {
+          contactIds: (venue.contactIds || []).filter((id) => id !== args.id),
+        });
+      }
     }
     await ctx.db.delete(args.id);
     return null;

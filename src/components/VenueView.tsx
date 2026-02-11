@@ -61,6 +61,7 @@ function formatCurrency(value: number | undefined) {
 export function VenueView({ venueId, onEdit, onClose, onAddProject, onEditProject }: VenueViewProps) {
   const venue = useQuery(api.venues.get, { id: venueId });
   const venueProjects = useQuery(api.projects.listByVenue, { venueId });
+  const venueContacts = useQuery(api.contacts.listByVenue, { venueId });
   const updateVenue = useMutation(api.venues.update);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -92,7 +93,8 @@ export function VenueView({ venueId, onEdit, onClose, onAddProject, onEditProjec
             url: venue.url,
             submissionFormUrl: venue.submissionFormUrl,
             locations: venue.locations,
-            contacts: venue.contacts,
+            contacts: venue.contacts || [], // legacy
+            contactIds: venue.contactIds || [],
             status: venue.status,
             category: venue.category,
             notes: markdown,
@@ -129,9 +131,7 @@ export function VenueView({ venueId, onEdit, onClose, onAddProject, onEditProjec
     (loc) => loc.city || loc.state || loc.country,
   );
 
-  const contactsWithData = venue.contacts.filter(
-    (c) => c.name || c.title || c.email || c.notes,
-  );
+  const contactsWithData = venueContacts || [];
 
   return (
     <div className="h-full flex flex-col">
@@ -245,22 +245,20 @@ export function VenueView({ venueId, onEdit, onClose, onAddProject, onEditProjec
               Contacts
             </h3>
             <div className="space-y-3">
-              {contactsWithData.map((contact, i) => (
+              {contactsWithData.map((contact) => (
                 <div
-                  key={i}
+                  key={contact._id}
                   className="p-3 bg-gray-50 rounded-lg border border-gray-100"
                 >
-                  {contact.name && (
-                    <div className="flex items-center gap-2">
-                      <Users size={14} className="text-gray-400" />
-                      <span className="font-medium text-gray-900">
-                        {contact.name}
-                      </span>
-                    </div>
-                  )}
-                  {contact.title && (
+                  <div className="flex items-center gap-2">
+                    <Users size={14} className="text-gray-400" />
+                    <span className="font-medium text-gray-900">
+                      {contact.name}
+                    </span>
+                  </div>
+                  {contact.role && (
                     <p className="text-sm text-gray-600 ml-[22px]">
-                      {contact.title}
+                      {contact.role}
                     </p>
                   )}
                   {contact.email && (
@@ -271,6 +269,12 @@ export function VenueView({ venueId, onEdit, onClose, onAddProject, onEditProjec
                       <Mail size={12} />
                       {contact.email}
                     </a>
+                  )}
+                  {contact.phone && (
+                    <p className="flex items-center gap-2 text-sm text-gray-500 mt-1 ml-[22px]">
+                      <Phone size={12} />
+                      {contact.phone}
+                    </p>
                   )}
                   {contact.notes && (
                     <p className="text-sm text-gray-500 mt-1 ml-[22px]">

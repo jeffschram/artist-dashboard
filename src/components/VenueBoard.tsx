@@ -15,10 +15,13 @@ import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { BoardColumn } from "./BoardColumn";
 import { VenueCard, VenueData } from "./VenueCard";
-import { Search, Plus, LayoutGrid } from "lucide-react";
+import { VenueMap } from "./VenueMap";
+import { VenueListPrint } from "./VenueListPrint";
+import { Search, Plus, LayoutGrid, Map, List, Columns3 } from "lucide-react";
 import { toast } from "sonner";
 
 type GroupBy = "category" | "status";
+type ViewMode = "kanban" | "map" | "list";
 
 const CATEGORY_COLUMNS: {
   key: "Ultimate Dream Goal" | "Accessible" | "Unconventional";
@@ -54,6 +57,7 @@ export function VenueBoard({
   onVenueSelect,
   onCreateNew,
 }: VenueBoardProps) {
+  const [viewMode, setViewMode] = useState<ViewMode>("kanban");
   const [groupBy, setGroupBy] = useState<GroupBy>("category");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeId, setActiveId] = useState<Id<"venues"> | null>(null);
@@ -244,7 +248,7 @@ export function VenueBoard({
   return (
     <div className="h-full flex flex-col">
       {/* Toolbar */}
-      <div className="px-5 py-3 bg-white border-b border-gray-200 flex items-center gap-4">
+      <div className="px-5 py-3 bg-white border-b border-gray-200 flex items-center gap-4 print:hidden">
         {/* Search */}
         <div className="relative flex-1 max-w-sm">
           <Search
@@ -260,31 +264,73 @@ export function VenueBoard({
           />
         </div>
 
-        {/* Group by toggle */}
+        {/* View mode toggle */}
         <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
           <button
-            onClick={() => setGroupBy("category")}
+            onClick={() => setViewMode("kanban")}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-              groupBy === "category"
+              viewMode === "kanban"
                 ? "bg-white text-gray-900 shadow-sm"
                 : "text-gray-500 hover:text-gray-700"
             }`}
+            title="Kanban board"
           >
-            <LayoutGrid size={13} />
-            Category
+            <Columns3 size={13} />
+            Board
           </button>
           <button
-            onClick={() => setGroupBy("status")}
+            onClick={() => setViewMode("map")}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-              groupBy === "status"
+              viewMode === "map"
                 ? "bg-white text-gray-900 shadow-sm"
                 : "text-gray-500 hover:text-gray-700"
             }`}
+            title="Map view"
           >
-            <LayoutGrid size={13} />
-            Status
+            <Map size={13} />
+            Map
+          </button>
+          <button
+            onClick={() => setViewMode("list")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              viewMode === "list"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+            title="Printable list"
+          >
+            <List size={13} />
+            List
           </button>
         </div>
+
+        {/* Group by toggle — only relevant in kanban mode */}
+        {viewMode === "kanban" && (
+          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+            <button
+              onClick={() => setGroupBy("category")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                groupBy === "category"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              <LayoutGrid size={13} />
+              Category
+            </button>
+            <button
+              onClick={() => setGroupBy("status")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                groupBy === "status"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              <LayoutGrid size={13} />
+              Status
+            </button>
+          </div>
+        )}
 
         {/* Venue count */}
         <span className="text-xs text-gray-500">
@@ -301,47 +347,61 @@ export function VenueBoard({
         </button>
       </div>
 
-      {/* Board */}
-      <div className="flex-1 overflow-hidden p-4">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCorners}
-          onDragStart={handleDragStart}
-          onDragOver={handleDragOver}
-          onDragEnd={handleDragEnd}
-          onDragCancel={handleDragCancel}
-        >
-          <div className="flex gap-4 h-full">
-            {columns.map((col) => (
-              <BoardColumn
-                key={col.key}
-                id={col.key}
-                title={col.title}
-                accentColor={col.accent}
-                venues={col.venues}
-                selectedVenueId={selectedVenueId}
-                onVenueSelect={onVenueSelect}
-                groupBy={groupBy}
-                activeId={activeId}
-              />
-            ))}
-          </div>
-
-          <DragOverlay dropAnimation={null}>
-            {activeVenue ? (
-              <div className="opacity-90 rotate-[2deg] pointer-events-none w-[280px]">
-                <VenueCard
-                  venue={activeVenue}
-                  isSelected={false}
-                  onClick={() => {}}
+      {/* Content — switch on viewMode */}
+      {viewMode === "kanban" && (
+        <div className="flex-1 overflow-hidden p-4">
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCorners}
+            onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
+            onDragEnd={handleDragEnd}
+            onDragCancel={handleDragCancel}
+          >
+            <div className="flex gap-4 h-full">
+              {columns.map((col) => (
+                <BoardColumn
+                  key={col.key}
+                  id={col.key}
+                  title={col.title}
+                  accentColor={col.accent}
+                  venues={col.venues}
+                  selectedVenueId={selectedVenueId}
+                  onVenueSelect={onVenueSelect}
                   groupBy={groupBy}
-                  isDragOverlay
+                  activeId={activeId}
                 />
-              </div>
-            ) : null}
-          </DragOverlay>
-        </DndContext>
-      </div>
+              ))}
+            </div>
+
+            <DragOverlay dropAnimation={null}>
+              {activeVenue ? (
+                <div className="opacity-90 rotate-[2deg] pointer-events-none w-[280px]">
+                  <VenueCard
+                    venue={activeVenue}
+                    isSelected={false}
+                    onClick={() => {}}
+                    groupBy={groupBy}
+                    isDragOverlay
+                  />
+                </div>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
+        </div>
+      )}
+
+      {viewMode === "map" && (
+        <div className="flex-1 overflow-hidden">
+          <VenueMap venues={filteredVenues} onVenueSelect={onVenueSelect} />
+        </div>
+      )}
+
+      {viewMode === "list" && (
+        <div className="flex-1 overflow-hidden">
+          <VenueListPrint venues={filteredVenues} onVenueSelect={onVenueSelect} />
+        </div>
+      )}
     </div>
   );
 }

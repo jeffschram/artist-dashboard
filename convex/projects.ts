@@ -5,7 +5,8 @@ const projectReturnType = v.object({
   _id: v.id("projects"),
   _creationTime: v.number(),
   name: v.string(),
-  venueId: v.id("venues"),
+  venueIds: v.optional(v.array(v.id("venues"))),
+  venueId: v.optional(v.id("venues")), // Legacy field - for transition period
   startDate: v.optional(v.string()),
   endDate: v.optional(v.string()),
   description: v.optional(v.string()),
@@ -32,10 +33,8 @@ export const listByVenue = query({
   args: { venueId: v.id("venues") },
   returns: v.array(projectReturnType),
   handler: async (ctx, args) => {
-    return await ctx.db
-      .query("projects")
-      .withIndex("by_venue", (q) => q.eq("venueId", args.venueId))
-      .collect();
+    const allProjects = await ctx.db.query("projects").collect();
+    return allProjects.filter((p) => (p.venueIds || []).includes(args.venueId));
   },
 });
 
@@ -54,7 +53,7 @@ export const get = query({
 export const create = mutation({
   args: {
     name: v.string(),
-    venueId: v.id("venues"),
+    venueIds: v.optional(v.array(v.id("venues"))),
     startDate: v.optional(v.string()),
     endDate: v.optional(v.string()),
     description: v.optional(v.string()),
@@ -70,7 +69,10 @@ export const create = mutation({
   },
   returns: v.id("projects"),
   handler: async (ctx, args) => {
-    return await ctx.db.insert("projects", args);
+    return await ctx.db.insert("projects", {
+      ...args,
+      venueIds: args.venueIds || [],
+    });
   },
 });
 
@@ -78,7 +80,7 @@ export const update = mutation({
   args: {
     id: v.id("projects"),
     name: v.string(),
-    venueId: v.id("venues"),
+    venueIds: v.optional(v.array(v.id("venues"))),
     startDate: v.optional(v.string()),
     endDate: v.optional(v.string()),
     description: v.optional(v.string()),

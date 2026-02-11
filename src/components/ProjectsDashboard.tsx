@@ -62,10 +62,10 @@ export function ProjectsDashboard() {
     if (statusFilter !== "all" && p.status !== statusFilter) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      const venueName = venueMap.get(p.venueId) || "";
+      const venueNames = (p.venueIds || []).map((id) => venueMap.get(id) || "").join(" ");
       return (
         p.name.toLowerCase().includes(q) ||
-        venueName.toLowerCase().includes(q) ||
+        venueNames.toLowerCase().includes(q) ||
         (p.description || "").toLowerCase().includes(q)
       );
     }
@@ -162,7 +162,13 @@ export function ProjectsDashboard() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filtered.map((project) => {
-              const venueName = venueMap.get(project.venueId) || "Unknown Venue";
+              const venueNames = (project.venueIds || [])
+                .map((id) => venueMap.get(id))
+                .filter(Boolean);
+              const venueDisplay =
+                venueNames.length > 0
+                  ? venueNames.join(", ")
+                  : "No venues assigned";
               return (
                 <button
                   key={project._id}
@@ -182,7 +188,7 @@ export function ProjectsDashboard() {
 
                   <div className="flex items-center gap-1.5 text-sm text-gray-500 mb-2">
                     <Building2 size={14} className="shrink-0" />
-                    <span className="truncate">{venueName}</span>
+                    <span className="truncate">{venueDisplay}</span>
                   </div>
 
                   {project.description && (

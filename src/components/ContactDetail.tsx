@@ -35,7 +35,7 @@ export function ContactDetail({
     phone: "",
     role: "",
     notes: "",
-    venueId: "" as string,
+    venueIds: [] as string[],
   });
   const [isSaving, setIsSaving] = useState(false);
 
@@ -47,7 +47,7 @@ export function ContactDetail({
         phone: contact.phone || "",
         role: contact.role || "",
         notes: contact.notes || "",
-        venueId: contact.venueId || "",
+        venueIds: contact.venueIds || [],
       });
     } else if (isCreating) {
       setFormData({
@@ -56,7 +56,7 @@ export function ContactDetail({
         phone: "",
         role: "",
         notes: "",
-        venueId: defaultVenueId || "",
+        venueIds: defaultVenueId ? [defaultVenueId] : [],
       });
     }
   }, [contact, isCreating, defaultVenueId]);
@@ -75,9 +75,7 @@ export function ContactDetail({
         phone: formData.phone || undefined,
         role: formData.role || undefined,
         notes: formData.notes || undefined,
-        venueId: formData.venueId
-          ? (formData.venueId as Id<"venues">)
-          : undefined,
+        venueIds: formData.venueIds as Id<"venues">[],
       };
 
       if (isCreating) {
@@ -219,23 +217,37 @@ export function ContactDetail({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Venue
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Venues (optional)
             </label>
-            <select
-              value={formData.venueId}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, venueId: e.target.value }))
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">No venue</option>
+            <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-2 space-y-1">
               {(venues ?? []).map((v) => (
-                <option key={v._id} value={v._id}>
-                  {v.name}
-                </option>
+                <label
+                  key={v._id}
+                  className="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 rounded cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    checked={formData.venueIds.includes(v._id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setFormData((p) => ({
+                          ...p,
+                          venueIds: [...p.venueIds, v._id],
+                        }));
+                      } else {
+                        setFormData((p) => ({
+                          ...p,
+                          venueIds: p.venueIds.filter((id) => id !== v._id),
+                        }));
+                      }
+                    }}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-900">{v.name}</span>
+                </label>
               ))}
-            </select>
+            </div>
           </div>
         </div>
 

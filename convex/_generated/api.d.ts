@@ -12,6 +12,7 @@ import type * as auth from "../auth.js";
 import type * as collaborators from "../collaborators.js";
 import type * as contacts from "../contacts.js";
 import type * as http from "../http.js";
+import type * as migrations from "../migrations.js";
 import type * as projects from "../projects.js";
 import type * as router from "../router.js";
 import type * as seedVenuesData from "../seedVenuesData.js";
@@ -29,6 +30,7 @@ declare const fullApi: ApiFromModules<{
   collaborators: typeof collaborators;
   contacts: typeof contacts;
   http: typeof http;
+  migrations: typeof migrations;
   projects: typeof projects;
   router: typeof router;
   seedVenuesData: typeof seedVenuesData;
