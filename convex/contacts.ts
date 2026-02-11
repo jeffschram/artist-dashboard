@@ -10,6 +10,7 @@ export const list = query({
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
     role: v.optional(v.string()),
+    types: v.optional(v.array(v.string())),
     notes: v.optional(v.string()),
     venueIds: v.optional(v.array(v.id("venues"))),
     venueId: v.optional(v.id("venues")), // Legacy field - for transition period
@@ -29,6 +30,7 @@ export const listByVenue = query({
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
     role: v.optional(v.string()),
+    types: v.optional(v.array(v.string())),
     notes: v.optional(v.string()),
     venueIds: v.optional(v.array(v.id("venues"))),
     venueId: v.optional(v.id("venues")), // Legacy field - for transition period
@@ -49,6 +51,7 @@ export const listByCollaborator = query({
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
     role: v.optional(v.string()),
+    types: v.optional(v.array(v.string())),
     notes: v.optional(v.string()),
     venueIds: v.optional(v.array(v.id("venues"))),
     venueId: v.optional(v.id("venues")), // Legacy field - for transition period
@@ -71,6 +74,7 @@ export const get = query({
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
     role: v.optional(v.string()),
+    types: v.optional(v.array(v.string())),
     notes: v.optional(v.string()),
     venueIds: v.optional(v.array(v.id("venues"))),
     venueId: v.optional(v.id("venues")), // Legacy field - for transition period
@@ -91,6 +95,21 @@ export const create = mutation({
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
     role: v.optional(v.string()),
+    types: v.optional(
+      v.array(
+        v.union(
+          v.literal("Venue Contact"),
+          v.literal("Colleague"),
+          v.literal("Artist"),
+          v.literal("Client"),
+          v.literal("Patron"),
+          v.literal("Customer"),
+          v.literal("Agent"),
+          v.literal("Vendor"),
+          v.literal("Other"),
+        ),
+      ),
+    ),
     notes: v.optional(v.string()),
     venueIds: v.optional(v.array(v.id("venues"))),
     collaboratorId: v.optional(v.id("collaborators")),
@@ -111,6 +130,21 @@ export const update = mutation({
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
     role: v.optional(v.string()),
+    types: v.optional(
+      v.array(
+        v.union(
+          v.literal("Venue Contact"),
+          v.literal("Colleague"),
+          v.literal("Artist"),
+          v.literal("Client"),
+          v.literal("Patron"),
+          v.literal("Customer"),
+          v.literal("Agent"),
+          v.literal("Vendor"),
+          v.literal("Other"),
+        ),
+      ),
+    ),
     notes: v.optional(v.string()),
     venueIds: v.optional(v.array(v.id("venues"))),
     collaboratorId: v.optional(v.id("collaborators")),
@@ -143,6 +177,14 @@ export const remove = mutation({
           contactIds: (venue.contactIds || []).filter((id) => id !== args.id),
         });
       }
+    }
+    // Remove all project-contact links
+    const projectLinks = await ctx.db
+      .query("projectContacts")
+      .withIndex("by_contact", (q) => q.eq("contactId", args.id))
+      .collect();
+    for (const link of projectLinks) {
+      await ctx.db.delete(link._id);
     }
     await ctx.db.delete(args.id);
     return null;

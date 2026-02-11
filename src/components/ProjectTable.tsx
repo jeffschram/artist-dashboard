@@ -44,6 +44,8 @@ interface ProjectData {
 interface ProjectTableProps {
   projects: ProjectData[];
   venueMap: Map<Id<"venues">, string>;
+  contactMap: Map<Id<"contacts">, string>;
+  projectToContacts: Map<Id<"projects">, Id<"contacts">[]>;
   onProjectSelect: (projectId: Id<"projects">) => void;
 }
 
@@ -75,6 +77,8 @@ function formatCurrency(value: number | undefined) {
 export function ProjectTable({
   projects,
   venueMap,
+  contactMap,
+  projectToContacts,
   onProjectSelect,
 }: ProjectTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -150,6 +154,28 @@ export function ProjectTable({
               {venueNames.length > 2 && (
                 <span className="text-muted-foreground ml-1">
                   +{venueNames.length - 2}
+                </span>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        id: "people",
+        header: "People",
+        cell: ({ row }) => {
+          const contactIds = projectToContacts.get(row.original._id) || [];
+          const contactNames = contactIds
+            .map((id) => contactMap.get(id))
+            .filter(Boolean);
+          if (contactNames.length === 0)
+            return <span className="text-muted-foreground">—</span>;
+          return (
+            <div className="text-sm">
+              {contactNames.slice(0, 2).join(", ")}
+              {contactNames.length > 2 && (
+                <span className="text-muted-foreground ml-1">
+                  +{contactNames.length - 2}
                 </span>
               )}
             </div>

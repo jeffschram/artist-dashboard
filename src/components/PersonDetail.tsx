@@ -21,8 +21,9 @@ import {
   ComboboxValue,
   useComboboxAnchor,
 } from "@/components/ui/combobox";
+import { PERSON_TYPES } from "@/lib/personTypes";
 
-interface ContactDetailProps {
+interface PersonDetailProps {
   contactId: Id<"contacts"> | null;
   isCreating: boolean;
   /** Pre-fill venue when creating from a venue view */
@@ -30,31 +31,48 @@ interface ContactDetailProps {
   onClose: () => void;
 }
 
-export function ContactDetail({
+export function PersonDetail({
   contactId,
   isCreating,
   defaultVenueId,
   onClose,
-}: ContactDetailProps) {
+}: PersonDetailProps) {
   const contact = useQuery(
     api.contacts.get,
     contactId ? { id: contactId } : "skip",
   );
   const venues = useQuery(api.venues.list);
+  const allProjects = useQuery(api.projects.list);
+  const linkedProjectIds = useQuery(
+    api.projects.listProjectsByContact,
+    contactId ? { contactId } : "skip",
+  );
   const createContact = useMutation(api.contacts.create);
   const updateContact = useMutation(api.contacts.update);
   const deleteContact = useMutation(api.contacts.remove);
+  const linkProject = useMutation(api.projects.linkContact);
+  const unlinkProject = useMutation(api.projects.unlinkContact);
 
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     role: "",
+    types: [] as string[],
     notes: "",
     venueIds: [] as string[],
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedProjectIds, setSelectedProjectIds] = useState<Id<"projects">[]>([]);
   const venuesAnchor = useComboboxAnchor();
+  const typesAnchor = useComboboxAnchor();
+  const projectsAnchor = useComboboxAnchor();
+
+  useEffect(() => {
+    if (linkedProjectIds) {
+      setSelectedProjectIds(linkedProjectIds);
+    }
+  }, [linkedProjectIds]);
 
   useEffect(() => {
     if (contact && !isCreating) {
@@ -63,6 +81,7 @@ export function ContactDetail({
         email: contact.email || "",
         phone: contact.phone || "",
         role: contact.role || "",
+        types: contact.types || [],
         notes: contact.notes || "",
         venueIds: contact.venueIds || [],
       });
@@ -72,6 +91,7 @@ export function ContactDetail({
         email: "",
         phone: "",
         role: "",
+        types: [],
         notes: "",
         venueIds: defaultVenueId ? [defaultVenueId] : [],
       });
@@ -80,7 +100,7 @@ export function ContactDetail({
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
-      toast.error("Contact name is required");
+      toast.error("Name is required");
       return;
     }
 
@@ -91,20 +111,40 @@ export function ContactDetail({
         email: formData.email || undefined,
         phone: formData.phone || undefined,
         role: formData.role || undefined,
+        types: formData.types.length > 0 ? formData.types : undefined,
         notes: formData.notes || undefined,
         venueIds: formData.venueIds as Id<"venues">[],
       };
 
       if (isCreating) {
-        await createContact(payload);
-        toast.success("Contact created");
+        const newContactId = await createContact(payload);
+        
+        // Link selected projects to the new person
+        for (const projectId of selectedProjectIds) {
+          await linkProject({ projectId, contactId: newContactId });
+        }
+        
+        toast.success("Person created");
       } else if (contactId) {
         await updateContact({ id: contactId, ...payload });
-        toast.success("Contact updated");
+        
+        // Update project links
+        const currentProjectIds = linkedProjectIds || [];
+        const added = selectedProjectIds.filter((id) => !currentProjectIds.includes(id));
+        const removed = currentProjectIds.filter((id) => !selectedProjectIds.includes(id));
+        
+        for (const projectId of added) {
+          await linkProject({ projectId, contactId });
+        }
+        for (const projectId of removed) {
+          await unlinkProject({ projectId, contactId });
+        }
+        
+        toast.success("Person updated");
       }
       onClose();
     } catch {
-      toast.error("Failed to save contact");
+      toast.error("Failed to save person");
     } finally {
       setIsSaving(false);
     }
@@ -112,13 +152,13 @@ export function ContactDetail({
 
   const handleDelete = async () => {
     if (!contactId || isCreating) return;
-    if (confirm("Are you sure you want to delete this contact?")) {
+    if (confirm("Are you sure you want to delete this person?")) {
       try {
         await deleteContact({ id: contactId });
-        toast.success("Contact deleted");
+        toast.success("Person deleted");
         onClose();
       } catch {
-        toast.error("Failed to delete contact");
+        toast.error("Failed to delete person");
       }
     }
   };
@@ -137,7 +177,7 @@ export function ContactDetail({
       <div className="p-6 border-b bg-background">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold">
-            {isCreating ? "New Contact" : "Edit Contact"}
+            {isCreating ? "New Person" : "Edit Person"}
           </h2>
           <div className="flex items-center gap-2">
             {!isCreating && (
@@ -218,6 +258,44 @@ export function ContactDetail({
             </div>
 
             <div className="space-y-2">
+              <Label>Person Types</Label>
+              <Combobox
+                multiple
+                items={PERSON_TYPES as unknown as string[]}
+                itemToStringValue={(type) => type}
+                value={formData.types}
+                onValueChange={(types) =>
+                  setFormData((p) => ({ ...p, types: types }))
+                }
+              >
+                <ComboboxChips ref={typesAnchor}>
+                  <ComboboxValue>
+                    {(values: string[]) => (
+                      <>
+                        {values.map((type) => (
+                          <ComboboxChip key={type}>
+                            {type}
+                          </ComboboxChip>
+                        ))}
+                        <ComboboxChipsInput placeholder="Select types..." />
+                      </>
+                    )}
+                  </ComboboxValue>
+                </ComboboxChips>
+                <ComboboxContent anchor={typesAnchor}>
+                  <ComboboxEmpty>No types found.</ComboboxEmpty>
+                  <ComboboxList>
+                    {(type: string) => (
+                      <ComboboxItem key={type} value={type}>
+                        {type}
+                      </ComboboxItem>
+                    )}
+                  </ComboboxList>
+                </ComboboxContent>
+              </Combobox>
+            </div>
+
+            <div className="space-y-2">
               <Label>Venues (optional)</Label>
               <Combobox
                 multiple
@@ -256,6 +334,68 @@ export function ContactDetail({
                       return (
                         <ComboboxItem key={id} value={id}>
                           {v?.name}
+                        </ComboboxItem>
+                      );
+                    }}
+                  </ComboboxList>
+                </ComboboxContent>
+              </Combobox>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Projects */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Projects</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Link projects to this person</Label>
+              <Combobox
+                multiple
+                items={(allProjects ?? []).map((p) => p._id)}
+                itemToStringValue={(id) => {
+                  const p = allProjects?.find((p) => p._id === id);
+                  return p?.name ?? "";
+                }}
+                value={selectedProjectIds}
+                onValueChange={(ids) =>
+                  setSelectedProjectIds(ids as Id<"projects">[])
+                }
+              >
+                <ComboboxChips ref={projectsAnchor}>
+                  <ComboboxValue>
+                    {(values: string[]) => (
+                      <>
+                        {values.map((id) => {
+                          const p = allProjects?.find((p) => p._id === id);
+                          return (
+                            <ComboboxChip key={id}>
+                              {p?.name ?? "Unknown"}
+                            </ComboboxChip>
+                          );
+                        })}
+                        <ComboboxChipsInput placeholder="Search projects..." />
+                      </>
+                    )}
+                  </ComboboxValue>
+                </ComboboxChips>
+                <ComboboxContent anchor={projectsAnchor}>
+                  <ComboboxEmpty>No projects found.</ComboboxEmpty>
+                  <ComboboxList>
+                    {(id: string) => {
+                      const project = allProjects?.find((p) => p._id === id);
+                      return (
+                        <ComboboxItem key={id} value={id}>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium truncate">
+                              {project?.name}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {project?.status}
+                            </div>
+                          </div>
                         </ComboboxItem>
                       );
                     }}
