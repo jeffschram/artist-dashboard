@@ -14,13 +14,15 @@ const applicationTables = {
       country: v.optional(v.string()),
       phoneNumber: v.optional(v.string()),
     })),
-    // Legacy inline contacts — kept for backward compat; new contacts go to the contacts table
+    // Legacy inline contacts — kept for backward compat during migration
     contacts: v.array(v.object({
       name: v.optional(v.string()),
       title: v.optional(v.string()),
       email: v.optional(v.string()),
       notes: v.optional(v.string()),
     })),
+    // New relational contact references
+    contactIds: v.optional(v.array(v.id("contacts"))),
     status: v.union(
       v.literal("Contacted"),
       v.literal("To Contact"),
@@ -38,7 +40,8 @@ const applicationTables = {
 
   projects: defineTable({
     name: v.string(),
-    venueId: v.id("venues"),
+    venueIds: v.optional(v.array(v.id("venues"))), // Optional during migration
+    venueId: v.optional(v.id("venues")), // Legacy field - will be removed after migration
     startDate: v.optional(v.string()),
     endDate: v.optional(v.string()),
     description: v.optional(v.string()),
@@ -51,8 +54,7 @@ const applicationTables = {
     notes: v.optional(v.string()),
     budget: v.optional(v.number()),
     profit: v.optional(v.number()),
-  })
-    .index("by_venue", ["venueId"]),
+  }),
 
   collaborators: defineTable({
     name: v.string(),
@@ -77,10 +79,10 @@ const applicationTables = {
     phone: v.optional(v.string()),
     role: v.optional(v.string()),
     notes: v.optional(v.string()),
-    venueId: v.optional(v.id("venues")),
+    venueIds: v.optional(v.array(v.id("venues"))), // Optional during migration
+    venueId: v.optional(v.id("venues")), // Legacy field - will be removed after migration
     collaboratorId: v.optional(v.id("collaborators")),
   })
-    .index("by_venue", ["venueId"])
     .index("by_collaborator", ["collaboratorId"]),
 };
 

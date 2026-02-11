@@ -19,30 +19,37 @@ interface Location {
   phoneNumber?: string;
 }
 
-interface Contact {
-  name?: string;
-  title?: string;
-  email?: string;
-  notes?: string;
-}
-
 export function VenueDetail({ venueId, isCreating, onClose }: VenueDetailProps) {
   const venue = useQuery(api.venues.get, venueId ? { id: venueId } : "skip");
+  const linkedContacts = useQuery(
+    api.contacts.listByVenue,
+    venueId ? { venueId } : "skip",
+  );
+  const allContacts = useQuery(api.contacts.list);
   const createVenue = useMutation(api.venues.create);
   const updateVenue = useMutation(api.venues.update);
   const deleteVenue = useMutation(api.venues.remove);
+  const createContact = useMutation(api.contacts.create);
+  const updateContact = useMutation(api.contacts.update);
 
   const [formData, setFormData] = useState({
     name: "",
     url: "",
     submissionFormUrl: "",
     locations: [{ city: "", state: "", country: "", phoneNumber: "" }] as Location[],
-    contacts: [{ name: "", title: "", email: "", notes: "" }] as Contact[],
     status: "To Contact" as "Contacted" | "To Contact" | "Ignore" | "Previous Client",
     category: "Accessible" as "Ultimate Dream Goal" | "Accessible" | "Unconventional",
     notes: "",
   });
 
+  const [selectedContactIds, setSelectedContactIds] = useState<Id<"contacts">[]>([]);
+  const [showAddContact, setShowAddContact] = useState(false);
+  const [newContact, setNewContact] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    role: "",
+  });
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -52,7 +59,6 @@ export function VenueDetail({ venueId, isCreating, onClose }: VenueDetailProps) 
         url: venue.url || "",
         submissionFormUrl: venue.submissionFormUrl || "",
         locations: venue.locations.length > 0 ? venue.locations : [{ city: "", state: "", country: "", phoneNumber: "" }],
-        contacts: venue.contacts.length > 0 ? venue.contacts : [{ name: "", title: "", email: "", notes: "" }],
         status: venue.status,
         category: venue.category,
         notes: venue.notes || "",
@@ -63,13 +69,19 @@ export function VenueDetail({ venueId, isCreating, onClose }: VenueDetailProps) 
         url: "",
         submissionFormUrl: "",
         locations: [{ city: "", state: "", country: "", phoneNumber: "" }],
-        contacts: [{ name: "", title: "", email: "", notes: "" }],
         status: "To Contact",
         category: "Accessible",
         notes: "",
       });
     }
   }, [venue, isCreating]);
+
+  // Sync selected contacts from linked contacts
+  useEffect(() => {
+    if (linkedContacts) {
+      setSelectedContactIds(linkedContacts.map((c) => c._id));
+    }
+  }, [linkedContacts]);
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
@@ -80,10 +92,74 @@ export function VenueDetail({ venueId, isCreating, onClose }: VenueDetailProps) 
     setIsSaving(true);
     try {
       if (isCreating) {
-        await createVenue(formData);
+        const newVenueId = await createVenue({
+          ...formData,
+          contacts: [], // No inline contacts for new venues
+          contactIds: selectedContactIds,
+        });
+        
+        // Update all selected contacts to include this new venue
+        for (const contactId of selectedContactIds) {
+          const contact = allContacts?.find((c) => c._id === contactId);
+          if (contact) {
+            await updateContact({
+              id: contactId,
+              name: contact.name,
+              email: contact.email,
+              phone: contact.phone,
+              role: contact.role,
+              notes: contact.notes,
+              venueIds: [...(contact.venueIds || []), newVenueId],
+            });
+          }
+        }
         toast.success("Venue created successfully");
       } else if (venueId) {
-        await updateVenue({ id: venueId, ...formData });
+        // Update venue with new contactIds
+        await updateVenue({
+          id: venueId,
+          ...formData,
+          contacts: venue?.contacts || [], // Preserve legacy inline contacts
+          contactIds: selectedContactIds,
+        });
+
+        // Update contacts: add/remove this venue from their venueIds
+        const previousContactIds = (linkedContacts || []).map((c) => c._id);
+        const added = selectedContactIds.filter((id) => !previousContactIds.includes(id));
+        const removed = previousContactIds.filter((id) => !selectedContactIds.includes(id));
+
+        // Add this venue to newly linked contacts
+        for (const contactId of added) {
+          const contact = allContacts?.find((c) => c._id === contactId);
+          if (contact) {
+            await updateContact({
+              id: contactId,
+              name: contact.name,
+              email: contact.email,
+              phone: contact.phone,
+              role: contact.role,
+              notes: contact.notes,
+              venueIds: [...(contact.venueIds || []), venueId],
+            });
+          }
+        }
+
+        // Remove this venue from unlinked contacts
+        for (const contactId of removed) {
+          const contact = allContacts?.find((c) => c._id === contactId);
+          if (contact) {
+            await updateContact({
+              id: contactId,
+              name: contact.name,
+              email: contact.email,
+              phone: contact.phone,
+              role: contact.role,
+              notes: contact.notes,
+              venueIds: (contact.venueIds || []).filter((id) => id !== venueId),
+            });
+          }
+        }
+
         toast.success("Venue updated successfully");
       }
       onClose();
@@ -131,27 +207,36 @@ export function VenueDetail({ venueId, isCreating, onClose }: VenueDetailProps) 
     }));
   };
 
-  const addContact = () => {
-    setFormData(prev => ({
-      ...prev,
-      contacts: [...prev.contacts, { name: "", title: "", email: "", notes: "" }]
-    }));
+  const toggleContactSelection = (contactId: Id<"contacts">) => {
+    setSelectedContactIds((prev) =>
+      prev.includes(contactId)
+        ? prev.filter((id) => id !== contactId)
+        : [...prev, contactId]
+    );
   };
 
-  const removeContact = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      contacts: prev.contacts.filter((_, i) => i !== index)
-    }));
-  };
+  const handleAddNewContact = async () => {
+    if (!newContact.name.trim()) {
+      toast.error("Contact name is required");
+      return;
+    }
 
-  const updateContact = (index: number, field: keyof Contact, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      contacts: prev.contacts.map((contact, i) => 
-        i === index ? { ...contact, [field]: value } : contact
-      )
-    }));
+    try {
+      const contactId = await createContact({
+        name: newContact.name,
+        email: newContact.email || undefined,
+        phone: newContact.phone || undefined,
+        role: newContact.role || undefined,
+        venueIds: venueId ? [venueId] : [],
+      });
+      
+      setSelectedContactIds((prev) => [...prev, contactId]);
+      setNewContact({ name: "", email: "", phone: "", role: "" });
+      setShowAddContact(false);
+      toast.success("Contact added");
+    } catch (error) {
+      toast.error("Failed to add contact");
+    }
   };
 
   if (venue === undefined && !isCreating) {
@@ -380,7 +465,7 @@ export function VenueDetail({ venueId, isCreating, onClose }: VenueDetailProps) 
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-medium text-gray-900">Contacts</h3>
             <button
-              onClick={addContact}
+              onClick={() => setShowAddContact(!showAddContact)}
               className="flex items-center gap-1 px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <Plus size={14} />
@@ -388,52 +473,97 @@ export function VenueDetail({ venueId, isCreating, onClose }: VenueDetailProps) 
             </button>
           </div>
 
-          <div className="space-y-4">
-            {formData.contacts.map((contact, index) => (
-              <div key={index} className="p-4 border border-gray-200 rounded-lg">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-medium text-gray-700">Contact {index + 1}</span>
-                  {formData.contacts.length > 1 && (
-                    <button
-                      onClick={() => removeContact(index)}
-                      className="text-red-600 hover:bg-red-50 p-1 rounded"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-3 mb-3">
-                  <input
-                    type="text"
-                    value={contact.name || ""}
-                    onChange={(e) => updateContact(index, "name", e.target.value)}
-                    placeholder="Name"
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                  <input
-                    type="text"
-                    value={contact.title || ""}
-                    onChange={(e) => updateContact(index, "title", e.target.value)}
-                    placeholder="Title"
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
+          {/* Add new contact form */}
+          {showAddContact && (
+            <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-3">
+              <h4 className="text-sm font-medium text-gray-700">New Contact</h4>
+              <div className="grid grid-cols-2 gap-3">
+                <input
+                  type="text"
+                  value={newContact.name}
+                  onChange={(e) => setNewContact((p) => ({ ...p, name: e.target.value }))}
+                  placeholder="Name *"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                />
+                <input
+                  type="text"
+                  value={newContact.role}
+                  onChange={(e) => setNewContact((p) => ({ ...p, role: e.target.value }))}
+                  placeholder="Role"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                />
                 <input
                   type="email"
-                  value={contact.email || ""}
-                  onChange={(e) => updateContact(index, "email", e.target.value)}
+                  value={newContact.email}
+                  onChange={(e) => setNewContact((p) => ({ ...p, email: e.target.value }))}
                   placeholder="Email"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-3"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                 />
-                <textarea
-                  value={contact.notes || ""}
-                  onChange={(e) => updateContact(index, "notes", e.target.value)}
-                  placeholder="Notes about this contact"
-                  rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                <input
+                  type="tel"
+                  value={newContact.phone}
+                  onChange={(e) => setNewContact((p) => ({ ...p, phone: e.target.value }))}
+                  placeholder="Phone"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                 />
               </div>
-            ))}
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => {
+                    setShowAddContact(false);
+                    setNewContact({ name: "", email: "", phone: "", role: "" });
+                  }}
+                  className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddNewContact}
+                  className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Multi-select existing contacts */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Link existing contacts ({selectedContactIds.length} selected)
+            </label>
+            <div className="max-h-64 overflow-y-auto border border-gray-300 rounded-lg p-2 space-y-1">
+              {allContacts && allContacts.length > 0 ? (
+                allContacts.map((contact) => (
+                  <label
+                    key={contact._id}
+                    className="flex items-start gap-2 px-2 py-2 hover:bg-gray-50 rounded cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedContactIds.includes(contact._id)}
+                      onChange={() => toggleContactSelection(contact._id)}
+                      className="mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-gray-900 truncate">
+                        {contact.name}
+                      </div>
+                      {contact.role && (
+                        <div className="text-xs text-gray-500">{contact.role}</div>
+                      )}
+                      {contact.email && (
+                        <div className="text-xs text-gray-500 truncate">{contact.email}</div>
+                      )}
+                    </div>
+                  </label>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500 p-2">
+                  No contacts available. Create one using the button above.
+                </p>
+              )}
+            </div>
           </div>
         </div>
 

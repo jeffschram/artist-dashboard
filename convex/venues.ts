@@ -35,12 +35,15 @@ export const create = mutation({
       country: v.optional(v.string()),
       phoneNumber: v.optional(v.string()),
     })),
-    contacts: v.array(v.object({
+    // Legacy inline contacts (backward compat)
+    contacts: v.optional(v.array(v.object({
       name: v.optional(v.string()),
       title: v.optional(v.string()),
       email: v.optional(v.string()),
       notes: v.optional(v.string()),
-    })),
+    }))),
+    // New relational contact IDs
+    contactIds: v.optional(v.array(v.id("contacts"))),
     status: v.union(v.literal("Contacted"), v.literal("To Contact"), v.literal("Ignore"), v.literal("Previous Client")),
     category: v.union(v.literal("Ultimate Dream Goal"), v.literal("Accessible"), v.literal("Unconventional")),
     notes: v.optional(v.string()),
@@ -55,7 +58,15 @@ export const create = mutation({
 
     return await ctx.db.insert("venues", {
       orderNum: maxOrder + 1,
-      ...args,
+      contacts: args.contacts || [],
+      contactIds: args.contactIds || [],
+      name: args.name,
+      url: args.url,
+      submissionFormUrl: args.submissionFormUrl,
+      locations: args.locations,
+      status: args.status,
+      category: args.category,
+      notes: args.notes,
     });
   },
 });
@@ -72,12 +83,15 @@ export const update = mutation({
       country: v.optional(v.string()),
       phoneNumber: v.optional(v.string()),
     })),
-    contacts: v.array(v.object({
+    // Legacy inline contacts (backward compat)
+    contacts: v.optional(v.array(v.object({
       name: v.optional(v.string()),
       title: v.optional(v.string()),
       email: v.optional(v.string()),
       notes: v.optional(v.string()),
-    })),
+    }))),
+    // New relational contact IDs
+    contactIds: v.optional(v.array(v.id("contacts"))),
     status: v.union(v.literal("Contacted"), v.literal("To Contact"), v.literal("Ignore"), v.literal("Previous Client")),
     category: v.union(v.literal("Ultimate Dream Goal"), v.literal("Accessible"), v.literal("Unconventional")),
     notes: v.optional(v.string()),
@@ -134,6 +148,7 @@ export const seedVenuesFromFile = mutation({
         submissionFormUrl: item.submissionFormUrl,
         locations: item.locations,
         contacts: item.contacts,
+        contactIds: [], // Start with empty array for new venues
         status: item.status,
         category: item.category,
         notes: item.notes,
@@ -193,8 +208,12 @@ export const migrateContactsToTable = mutation({
   handler: async (ctx) => {
     const venues = await ctx.db.query("venues").collect();
     const existingContacts = await ctx.db.query("contacts").collect();
+    // Build a set of existing contacts (keyed by first venueId::name::email for deduplication)
     const existingKeys = new Set(
-      existingContacts.map((c) => `${c.venueId}::${c.name}::${c.email ?? ""}`)
+      existingContacts.map((c) => {
+        const firstVenueId = (c.venueIds || [])[0] || "";
+        return `${firstVenueId}::${c.name}::${c.email ?? ""}`;
+      })
     );
 
     let migrated = 0;
@@ -211,13 +230,20 @@ export const migrateContactsToTable = mutation({
           skipped++;
           continue;
         }
-        await ctx.db.insert("contacts", {
+        const newContactId = await ctx.db.insert("contacts", {
           name: inlineContact.name,
           email: inlineContact.email,
           role: inlineContact.title,
           notes: inlineContact.notes,
-          venueId: venue._id,
+          venueIds: [venue._id],
         });
+        
+        // Update venue to include this contact in contactIds
+        const currentContactIds = venue.contactIds || [];
+        await ctx.db.patch(venue._id, {
+          contactIds: [...currentContactIds, newContactId],
+        });
+        
         migrated++;
       }
     }

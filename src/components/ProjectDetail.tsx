@@ -33,7 +33,7 @@ export function ProjectDetail({
 
   const [formData, setFormData] = useState({
     name: "",
-    venueId: "" as string,
+    venueIds: [] as string[],
     startDate: "",
     endDate: "",
     description: "",
@@ -48,7 +48,7 @@ export function ProjectDetail({
     if (project && !isCreating) {
       setFormData({
         name: project.name,
-        venueId: project.venueId,
+        venueIds: project.venueIds,
         startDate: project.startDate || "",
         endDate: project.endDate || "",
         description: project.description || "",
@@ -60,7 +60,7 @@ export function ProjectDetail({
     } else if (isCreating) {
       setFormData({
         name: "",
-        venueId: defaultVenueId || "",
+        venueIds: defaultVenueId ? [defaultVenueId] : [],
         startDate: "",
         endDate: "",
         description: "",
@@ -77,8 +77,8 @@ export function ProjectDetail({
       toast.error("Project name is required");
       return;
     }
-    if (!formData.venueId) {
-      toast.error("Please select a venue");
+    if (formData.venueIds.length === 0) {
+      toast.error("Please select at least one venue");
       return;
     }
 
@@ -86,7 +86,7 @@ export function ProjectDetail({
     try {
       const payload = {
         name: formData.name,
-        venueId: formData.venueId as Id<"venues">,
+        venueIds: formData.venueIds as Id<"venues">[],
         startDate: formData.startDate || undefined,
         endDate: formData.endDate || undefined,
         description: formData.description || undefined,
@@ -194,28 +194,43 @@ export function ProjectDetail({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Venue *
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Venues * (select one or more)
             </label>
-            <select
-              value={formData.venueId}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, venueId: e.target.value }))
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">Select a venue...</option>
-              {previousClientVenues.map((v) => (
-                <option key={v._id} value={v._id}>
-                  {v.name}
-                </option>
-              ))}
-            </select>
-            {previousClientVenues.length === 0 && (
-              <p className="text-xs text-gray-500 mt-1">
+            {previousClientVenues.length === 0 ? (
+              <p className="text-xs text-gray-500 py-2">
                 No venues with "Previous Client" status. Mark a venue as
                 "Previous Client" first.
               </p>
+            ) : (
+              <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-2 space-y-1">
+                {previousClientVenues.map((v) => (
+                  <label
+                    key={v._id}
+                    className="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 rounded cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formData.venueIds.includes(v._id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setFormData((p) => ({
+                            ...p,
+                            venueIds: [...p.venueIds, v._id],
+                          }));
+                        } else {
+                          setFormData((p) => ({
+                            ...p,
+                            venueIds: p.venueIds.filter((id) => id !== v._id),
+                          }));
+                        }
+                      }}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-900">{v.name}</span>
+                  </label>
+                ))}
+              </div>
             )}
           </div>
 

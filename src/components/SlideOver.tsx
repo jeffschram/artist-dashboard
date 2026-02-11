@@ -32,9 +32,10 @@ export function SlideOver({ isOpen, onClose, children }: SlideOverProps) {
       {/* Panel */}
       <div
         ref={panelRef}
-        className={`fixed top-0 right-0 h-full z-50 bg-gray-50 shadow-2xl border-l border-gray-200
+        className={`SlideOver fixed top-0 right-0 h-full z-50 bg-gray-50 shadow-2xl border-l border-gray-200
           transition-transform duration-300 ease-in-out
           w-[min(560px,90vw)]
+          z-[1000]
           ${isOpen ? "translate-x-0" : "translate-x-full"}
         `}
       >

@@ -29,12 +29,12 @@ export function ContactsDashboard() {
   const filtered = contacts.filter((c) => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
-    const venueName = c.venueId ? venueMap.get(c.venueId) || "" : "";
+    const venueNames = (c.venueIds || []).map((id) => venueMap.get(id) || "").join(" ");
     return (
       c.name.toLowerCase().includes(q) ||
       (c.email || "").toLowerCase().includes(q) ||
       (c.role || "").toLowerCase().includes(q) ||
-      venueName.toLowerCase().includes(q)
+      venueNames.toLowerCase().includes(q)
     );
   });
 
@@ -98,9 +98,9 @@ export function ContactsDashboard() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filtered.map((contact) => {
-              const venueName = contact.venueId
-                ? venueMap.get(contact.venueId)
-                : null;
+              const venueNames = (contact.venueIds || [])
+                .map((id) => venueMap.get(id))
+                .filter(Boolean);
               return (
                 <button
                   key={contact._id}
@@ -136,10 +136,12 @@ export function ContactsDashboard() {
                         <span>{contact.phone}</span>
                       </div>
                     )}
-                    {venueName && (
+                    {venueNames.length > 0 && (
                       <div className="flex items-center gap-2 text-gray-400 pt-1 border-t border-gray-100 mt-2">
                         <Building2 size={13} className="shrink-0" />
-                        <span className="truncate">{venueName}</span>
+                        <span className="truncate">
+                          {venueNames.join(", ")}
+                        </span>
                       </div>
                     )}
                   </div>
