@@ -4,19 +4,24 @@ import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { SlideOver } from "./SlideOver";
 import { ProjectDetail } from "./ProjectDetail";
+import { ProjectTable } from "./ProjectTable";
 import {
   Plus,
   Search,
   Calendar,
   DollarSign,
   Building2,
+  LayoutGrid,
+  Table as TableIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 
 type Mode = "idle" | "editing" | "creating";
+type ViewMode = "cards" | "table";
 
 function getStatusBadgeClass(status: string) {
   switch (status) {
@@ -44,6 +49,7 @@ export function ProjectsDashboard() {
   const [selectedProjectId, setSelectedProjectId] =
     useState<Id<"projects"> | null>(null);
   const [mode, setMode] = useState<Mode>("idle");
+  const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
@@ -109,6 +115,24 @@ export function ProjectsDashboard() {
           />
         </div>
 
+        {/* View mode toggle */}
+        <ToggleGroup
+          type="single"
+          value={viewMode}
+          onValueChange={(v) => v && setViewMode(v as ViewMode)}
+          variant="outline"
+          size="sm"
+        >
+          <ToggleGroupItem value="cards" aria-label="Cards view" className="gap-1.5 text-xs">
+            <LayoutGrid className="h-3.5 w-3.5" />
+            Cards
+          </ToggleGroupItem>
+          <ToggleGroupItem value="table" aria-label="Table view" className="gap-1.5 text-xs">
+            <TableIcon className="h-3.5 w-3.5" />
+            Table
+          </ToggleGroupItem>
+        </ToggleGroup>
+
         <div className="flex items-center gap-2">
           <Button
             variant={statusFilter === "all" ? "default" : "secondary"}
@@ -142,72 +166,85 @@ export function ProjectsDashboard() {
       </div>
 
       {/* Project cards */}
-      <div className="flex-1 overflow-y-auto p-6">
-        {filtered.length === 0 ? (
-          <div className="text-center py-16 text-muted-foreground">
-            <p className="text-lg font-medium">No projects found</p>
-            <p className="text-sm mt-1">
-              {projects.length === 0
-                ? 'Create your first project by clicking "New Project"'
-                : "Try adjusting your search or filter"}
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map((project) => {
-              const venueNames = (project.venueIds || [])
-                .map((id) => venueMap.get(id))
-                .filter(Boolean);
-              const venueDisplay =
-                venueNames.length > 0
-                  ? venueNames.join(", ")
-                  : "No venues assigned";
-              return (
-                <button
-                  key={project._id}
-                  onClick={() => handleSelect(project._id)}
-                  className="text-left bg-card p-5 rounded-xl border hover:border-primary/30 hover:shadow-md transition-all group"
-                >
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <h3 className="font-semibold group-hover:text-primary transition-colors line-clamp-1">
-                      {project.name}
-                    </h3>
-                    <Badge variant="secondary" className={cn("shrink-0 border-0", getStatusBadgeClass(project.status))}>
-                      {project.status}
-                    </Badge>
-                  </div>
+      {viewMode === "cards" && (
+        <div className="flex-1 overflow-y-auto p-6">
+          {filtered.length === 0 ? (
+            <div className="text-center py-16 text-muted-foreground">
+              <p className="text-lg font-medium">No projects found</p>
+              <p className="text-sm mt-1">
+                {projects.length === 0
+                  ? 'Create your first project by clicking "New Project"'
+                  : "Try adjusting your search or filter"}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filtered.map((project) => {
+                const venueNames = (project.venueIds || [])
+                  .map((id) => venueMap.get(id))
+                  .filter(Boolean);
+                const venueDisplay =
+                  venueNames.length > 0
+                    ? venueNames.join(", ")
+                    : "No venues assigned";
+                return (
+                  <button
+                    key={project._id}
+                    onClick={() => handleSelect(project._id)}
+                    className="text-left bg-card p-5 rounded-xl border hover:border-primary/30 hover:shadow-md transition-all group"
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                      <h3 className="font-semibold group-hover:text-primary transition-colors line-clamp-1">
+                        {project.name}
+                      </h3>
+                      <Badge variant="secondary" className={cn("shrink-0 border-0", getStatusBadgeClass(project.status))}>
+                        {project.status}
+                      </Badge>
+                    </div>
 
-                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-2">
-                    <Building2 className="h-3.5 w-3.5 shrink-0" />
-                    <span className="truncate">{venueDisplay}</span>
-                  </div>
+                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-2">
+                      <Building2 className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate">{venueDisplay}</span>
+                    </div>
 
-                  {project.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                      {project.description}
-                    </p>
-                  )}
-
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground mt-auto pt-2 border-t">
-                    {(project.startDate || project.endDate) && (
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {project.startDate || "?"} — {project.endDate || "?"}
-                      </span>
+                    {project.description && (
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                        {project.description}
+                      </p>
                     )}
-                    {project.budget != null && (
-                      <span className="flex items-center gap-1">
-                        <DollarSign className="h-3 w-3" />
-                        {formatCurrency(project.budget)}
-                      </span>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
+
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground mt-auto pt-2 border-t">
+                      {(project.startDate || project.endDate) && (
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {project.startDate || "?"} — {project.endDate || "?"}
+                        </span>
+                      )}
+                      {project.budget != null && (
+                        <span className="flex items-center gap-1">
+                          <DollarSign className="h-3 w-3" />
+                          {formatCurrency(project.budget)}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Project table */}
+      {viewMode === "table" && (
+        <div className="flex-1 overflow-hidden">
+          <ProjectTable
+            projects={filtered}
+            venueMap={venueMap}
+            onProjectSelect={handleSelect}
+          />
+        </div>
+      )}
 
       {/* Slide-over */}
       <SlideOver isOpen={mode !== "idle"} onClose={handleClose}>

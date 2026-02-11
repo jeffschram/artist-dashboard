@@ -17,14 +17,15 @@ import { BoardColumn } from "./BoardColumn";
 import { VenueCard, VenueData } from "./VenueCard";
 import { VenueMap } from "./VenueMap";
 import { VenueListPrint } from "./VenueListPrint";
-import { Search, Plus, LayoutGrid, Map, List, Columns3 } from "lucide-react";
+import { VenueTable } from "./VenueTable";
+import { Search, Plus, LayoutGrid, Map, List, Columns3, Table as TableIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 type GroupBy = "category" | "status";
-type ViewMode = "kanban" | "map" | "list";
+type ViewMode = "kanban" | "map" | "list" | "table";
 
 const CATEGORY_COLUMNS: {
   key: "Ultimate Dream Goal" | "Accessible" | "Unconventional";
@@ -259,13 +260,17 @@ export function VenueBoard({
             <Columns3 className="h-3.5 w-3.5" />
             Board
           </ToggleGroupItem>
-          <ToggleGroupItem value="map" aria-label="Map view" className="gap-1.5 text-xs">
-            <Map className="h-3.5 w-3.5" />
-            Map
+          <ToggleGroupItem value="table" aria-label="Table view" className="gap-1.5 text-xs">
+            <TableIcon className="h-3.5 w-3.5" />
+            Table
           </ToggleGroupItem>
           <ToggleGroupItem value="list" aria-label="Printable list" className="gap-1.5 text-xs">
             <List className="h-3.5 w-3.5" />
             List
+          </ToggleGroupItem>
+          <ToggleGroupItem value="map" aria-label="Map view" className="gap-1.5 text-xs">
+            <Map className="h-3.5 w-3.5" />
+            Map
           </ToggleGroupItem>
         </ToggleGroup>
 
@@ -354,6 +359,12 @@ export function VenueBoard({
       {viewMode === "list" && (
         <div className="flex-1 overflow-hidden">
           <VenueListPrint venues={filteredVenues} onVenueSelect={onVenueSelect} />
+        </div>
+      )}
+
+      {viewMode === "table" && (
+        <div className="flex-1 overflow-hidden">
+          <VenueTable venues={filteredVenues} onVenueSelect={onVenueSelect} />
         </div>
       )}
     </div>

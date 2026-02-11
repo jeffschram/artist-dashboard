@@ -4,11 +4,14 @@ import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { SlideOver } from "./SlideOver";
 import { ContactDetail } from "./ContactDetail";
-import { Plus, Search, Mail, Phone, Building2, UserCircle } from "lucide-react";
+import { ContactTable } from "./ContactTable";
+import { Plus, Search, Mail, Phone, Building2, UserCircle, LayoutGrid, Table as TableIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 type Mode = "idle" | "editing" | "creating";
+type ViewMode = "cards" | "table";
 
 export function ContactsDashboard() {
   const contacts = useQuery(api.contacts.list);
@@ -16,6 +19,7 @@ export function ContactsDashboard() {
   const [selectedContactId, setSelectedContactId] =
     useState<Id<"contacts"> | null>(null);
   const [mode, setMode] = useState<Mode>("idle");
+  const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [searchQuery, setSearchQuery] = useState("");
 
   if (contacts === undefined || venues === undefined) {
@@ -70,6 +74,24 @@ export function ContactsDashboard() {
           />
         </div>
 
+        {/* View mode toggle */}
+        <ToggleGroup
+          type="single"
+          value={viewMode}
+          onValueChange={(v) => v && setViewMode(v as ViewMode)}
+          variant="outline"
+          size="sm"
+        >
+          <ToggleGroupItem value="cards" aria-label="Cards view" className="gap-1.5 text-xs">
+            <LayoutGrid className="h-3.5 w-3.5" />
+            Cards
+          </ToggleGroupItem>
+          <ToggleGroupItem value="table" aria-label="Table view" className="gap-1.5 text-xs">
+            <TableIcon className="h-3.5 w-3.5" />
+            Table
+          </ToggleGroupItem>
+        </ToggleGroup>
+
         <span className="text-sm text-muted-foreground">
           {filtered.length} contact{filtered.length !== 1 ? "s" : ""}
         </span>
@@ -81,72 +103,85 @@ export function ContactsDashboard() {
       </div>
 
       {/* Contact list */}
-      <div className="flex-1 overflow-y-auto p-6">
-        {filtered.length === 0 ? (
-          <div className="text-center py-16 text-muted-foreground">
-            <p className="text-lg font-medium">No contacts found</p>
-            <p className="text-sm mt-1">
-              {contacts.length === 0
-                ? 'Add your first contact by clicking "New Contact"'
-                : "Try adjusting your search"}
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map((contact) => {
-              const venueNames = (contact.venueIds || [])
-                .map((id) => venueMap.get(id))
-                .filter(Boolean);
-              return (
-                <button
-                  key={contact._id}
-                  onClick={() => handleSelect(contact._id)}
-                  className="text-left bg-card p-5 rounded-xl border hover:border-primary/30 hover:shadow-md transition-all group"
-                >
-                  <div className="flex items-start gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
-                      <UserCircle className="h-5 w-5 text-muted-foreground" />
+      {viewMode === "cards" && (
+        <div className="flex-1 overflow-y-auto p-6">
+          {filtered.length === 0 ? (
+            <div className="text-center py-16 text-muted-foreground">
+              <p className="text-lg font-medium">No contacts found</p>
+              <p className="text-sm mt-1">
+                {contacts.length === 0
+                  ? 'Add your first contact by clicking "New Contact"'
+                  : "Try adjusting your search"}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filtered.map((contact) => {
+                const venueNames = (contact.venueIds || [])
+                  .map((id) => venueMap.get(id))
+                  .filter(Boolean);
+                return (
+                  <button
+                    key={contact._id}
+                    onClick={() => handleSelect(contact._id)}
+                    className="text-left bg-card p-5 rounded-xl border hover:border-primary/30 hover:shadow-md transition-all group"
+                  >
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+                        <UserCircle className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="font-semibold group-hover:text-primary transition-colors truncate">
+                          {contact.name}
+                        </h3>
+                        {contact.role && (
+                          <p className="text-sm text-muted-foreground truncate">
+                            {contact.role}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <h3 className="font-semibold group-hover:text-primary transition-colors truncate">
-                        {contact.name}
-                      </h3>
-                      {contact.role && (
-                        <p className="text-sm text-muted-foreground truncate">
-                          {contact.role}
-                        </p>
+
+                    <div className="space-y-1.5 text-sm">
+                      {contact.email && (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Mail className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">{contact.email}</span>
+                        </div>
+                      )}
+                      {contact.phone && (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Phone className="h-3.5 w-3.5 shrink-0" />
+                          <span>{contact.phone}</span>
+                        </div>
+                      )}
+                      {venueNames.length > 0 && (
+                        <div className="flex items-center gap-2 text-muted-foreground pt-1 border-t mt-2">
+                          <Building2 className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">
+                            {venueNames.join(", ")}
+                          </span>
+                        </div>
                       )}
                     </div>
-                  </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
-                  <div className="space-y-1.5 text-sm">
-                    {contact.email && (
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Mail className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate">{contact.email}</span>
-                      </div>
-                    )}
-                    {contact.phone && (
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Phone className="h-3.5 w-3.5 shrink-0" />
-                        <span>{contact.phone}</span>
-                      </div>
-                    )}
-                    {venueNames.length > 0 && (
-                      <div className="flex items-center gap-2 text-muted-foreground pt-1 border-t mt-2">
-                        <Building2 className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate">
-                          {venueNames.join(", ")}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
+      {/* Contact table */}
+      {viewMode === "table" && (
+        <div className="flex-1 overflow-hidden">
+          <ContactTable
+            contacts={filtered}
+            venueMap={venueMap}
+            onContactSelect={handleSelect}
+          />
+        </div>
+      )}
 
       {/* Slide-over */}
       <SlideOver isOpen={mode !== "idle"} onClose={handleClose}>
