@@ -115,11 +115,19 @@ export const remove = mutation({
       throw new Error("Project not found");
     }
     // Remove all project-collaborator links
-    const links = await ctx.db
+    const collaboratorLinks = await ctx.db
       .query("projectCollaborators")
       .withIndex("by_project", (q) => q.eq("projectId", args.id))
       .collect();
-    for (const link of links) {
+    for (const link of collaboratorLinks) {
+      await ctx.db.delete(link._id);
+    }
+    // Remove all project-contact links
+    const contactLinks = await ctx.db
+      .query("projectContacts")
+      .withIndex("by_project", (q) => q.eq("projectId", args.id))
+      .collect();
+    for (const link of contactLinks) {
       await ctx.db.delete(link._id);
     }
     await ctx.db.delete(args.id);
@@ -198,5 +206,133 @@ export const getCollaborators = query({
       }
     }
     return collaborators;
+  },
+});
+
+// --- Project Contact (People) links ---
+
+export const listContactsByProject = query({
+  args: { projectId: v.id("projects") },
+  returns: v.array(v.id("contacts")),
+  handler: async (ctx, args) => {
+    const links = await ctx.db
+      .query("projectContacts")
+      .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
+      .collect();
+    return links.map((link) => link.contactId);
+  },
+});
+
+export const getContactsWithData = query({
+  args: { projectId: v.id("projects") },
+  returns: v.array(v.object({
+    _id: v.id("contacts"),
+    _creationTime: v.number(),
+    name: v.string(),
+    email: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    role: v.optional(v.string()),
+    types: v.optional(
+      v.array(
+        v.union(
+          v.literal("Venue Contact"),
+          v.literal("Colleague"),
+          v.literal("Artist"),
+          v.literal("Client"),
+          v.literal("Patron"),
+          v.literal("Customer"),
+          v.literal("Agent"),
+          v.literal("Vendor"),
+          v.literal("Other"),
+        ),
+      ),
+    ),
+    notes: v.optional(v.string()),
+    venueIds: v.optional(v.array(v.id("venues"))),
+    venueId: v.optional(v.id("venues")),
+    collaboratorId: v.optional(v.id("collaborators")),
+  })),
+  handler: async (ctx, args) => {
+    const links = await ctx.db
+      .query("projectContacts")
+      .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
+      .collect();
+    const contacts = [];
+    for (const link of links) {
+      const contact = await ctx.db.get(link.contactId);
+      if (contact) {
+        contacts.push(contact);
+      }
+    }
+    return contacts;
+  },
+});
+
+export const getAllProjectContactLinks = query({
+  args: {},
+  returns: v.array(v.object({
+    projectId: v.id("projects"),
+    contactId: v.id("contacts"),
+  })),
+  handler: async (ctx) => {
+    const links = await ctx.db.query("projectContacts").collect();
+    return links.map((link) => ({
+      projectId: link.projectId,
+      contactId: link.contactId,
+    }));
+  },
+});
+
+export const listProjectsByContact = query({
+  args: { contactId: v.id("contacts") },
+  returns: v.array(v.id("projects")),
+  handler: async (ctx, args) => {
+    const links = await ctx.db
+      .query("projectContacts")
+      .withIndex("by_contact", (q) => q.eq("contactId", args.contactId))
+      .collect();
+    return links.map((link) => link.projectId);
+  },
+});
+
+export const linkContact = mutation({
+  args: {
+    projectId: v.id("projects"),
+    contactId: v.id("contacts"),
+  },
+  returns: v.id("projectContacts"),
+  handler: async (ctx, args) => {
+    // Check for existing link to prevent duplicates
+    const existing = await ctx.db
+      .query("projectContacts")
+      .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
+      .collect();
+    const alreadyLinked = existing.find((l) => l.contactId === args.contactId);
+    if (alreadyLinked) {
+      return alreadyLinked._id;
+    }
+    return await ctx.db.insert("projectContacts", {
+      projectId: args.projectId,
+      contactId: args.contactId,
+    });
+  },
+});
+
+export const unlinkContact = mutation({
+  args: {
+    projectId: v.id("projects"),
+    contactId: v.id("contacts"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const links = await ctx.db
+      .query("projectContacts")
+      .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
+      .collect();
+    const link = links.find((l) => l.contactId === args.contactId);
+    if (link) {
+      await ctx.db.delete(link._id);
+    }
+    return null;
   },
 });

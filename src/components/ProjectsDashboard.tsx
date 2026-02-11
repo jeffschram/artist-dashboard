@@ -13,6 +13,7 @@ import {
   Building2,
   LayoutGrid,
   Table as TableIcon,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,11 +26,16 @@ type ViewMode = "cards" | "table";
 
 function getStatusBadgeClass(status: string) {
   switch (status) {
-    case "Planning": return "bg-blue-100 text-blue-800 hover:bg-blue-100";
-    case "In Progress": return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
-    case "Completed": return "bg-green-100 text-green-800 hover:bg-green-100";
-    case "Cancelled": return "bg-gray-100 text-gray-600 hover:bg-gray-100";
-    default: return "bg-gray-100 text-gray-800 hover:bg-gray-100";
+    case "Planning":
+      return "bg-blue-100 text-blue-800 hover:bg-blue-100";
+    case "In Progress":
+      return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
+    case "Completed":
+      return "bg-green-100 text-green-800 hover:bg-green-100";
+    case "Cancelled":
+      return "bg-gray-100 text-gray-600 hover:bg-gray-100";
+    default:
+      return "bg-gray-100 text-gray-800 hover:bg-gray-100";
   }
 }
 
@@ -46,6 +52,8 @@ function formatCurrency(value: number | undefined) {
 export function ProjectsDashboard() {
   const projects = useQuery(api.projects.list);
   const venues = useQuery(api.venues.list);
+  const contacts = useQuery(api.contacts.list);
+  const projectContactLinks = useQuery(api.projects.getAllProjectContactLinks);
   const [selectedProjectId, setSelectedProjectId] =
     useState<Id<"projects"> | null>(null);
   const [mode, setMode] = useState<Mode>("idle");
@@ -53,7 +61,12 @@ export function ProjectsDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  if (projects === undefined || venues === undefined) {
+  if (
+    projects === undefined ||
+    venues === undefined ||
+    contacts === undefined ||
+    projectContactLinks === undefined
+  ) {
     return (
       <div className="flex justify-center items-center h-96">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -62,12 +75,22 @@ export function ProjectsDashboard() {
   }
 
   const venueMap = new Map(venues.map((v) => [v._id, v.name]));
+  const contactMap = new Map(contacts.map((c) => [c._id, c.name]));
+
+  // Create a map of projectId -> contactIds
+  const projectToContacts = new Map<Id<"projects">, Id<"contacts">[]>();
+  for (const link of projectContactLinks) {
+    const existing = projectToContacts.get(link.projectId) || [];
+    projectToContacts.set(link.projectId, [...existing, link.contactId]);
+  }
 
   const filtered = projects.filter((p) => {
     if (statusFilter !== "all" && p.status !== statusFilter) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      const venueNames = (p.venueIds || []).map((id) => venueMap.get(id) || "").join(" ");
+      const venueNames = (p.venueIds || [])
+        .map((id) => venueMap.get(id) || "")
+        .join(" ");
       return (
         p.name.toLowerCase().includes(q) ||
         venueNames.toLowerCase().includes(q) ||
@@ -123,11 +146,19 @@ export function ProjectsDashboard() {
           variant="outline"
           size="sm"
         >
-          <ToggleGroupItem value="cards" aria-label="Cards view" className="gap-1.5 text-xs">
+          <ToggleGroupItem
+            value="cards"
+            aria-label="Cards view"
+            className="gap-1.5 text-xs"
+          >
             <LayoutGrid className="h-3.5 w-3.5" />
             Cards
           </ToggleGroupItem>
-          <ToggleGroupItem value="table" aria-label="Table view" className="gap-1.5 text-xs">
+          <ToggleGroupItem
+            value="table"
+            aria-label="Table view"
+            className="gap-1.5 text-xs"
+          >
             <TableIcon className="h-3.5 w-3.5" />
             Table
           </ToggleGroupItem>
@@ -183,10 +214,10 @@ export function ProjectsDashboard() {
                 const venueNames = (project.venueIds || [])
                   .map((id) => venueMap.get(id))
                   .filter(Boolean);
-                const venueDisplay =
-                  venueNames.length > 0
-                    ? venueNames.join(", ")
-                    : "No venues assigned";
+                const contactIds = projectToContacts.get(project._id) || [];
+                const contactNames = contactIds
+                  .map((id) => contactMap.get(id))
+                  .filter(Boolean);
                 return (
                   <button
                     key={project._id}
@@ -197,15 +228,34 @@ export function ProjectsDashboard() {
                       <h3 className="font-semibold group-hover:text-primary transition-colors line-clamp-1">
                         {project.name}
                       </h3>
-                      <Badge variant="secondary" className={cn("shrink-0 border-0", getStatusBadgeClass(project.status))}>
+                      <Badge
+                        variant="secondary"
+                        className={cn(
+                          "shrink-0 border-0",
+                          getStatusBadgeClass(project.status),
+                        )}
+                      >
                         {project.status}
                       </Badge>
                     </div>
 
-                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-2">
-                      <Building2 className="h-3.5 w-3.5 shrink-0" />
-                      <span className="truncate">{venueDisplay}</span>
-                    </div>
+                    {venueNames.length > 0 && (
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-2">
+                        <Building2 className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">{venueNames.join(", ")}</span>
+                      </div>
+                    )}
+
+                    {contactNames.length > 0 && (
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-2">
+                        <Users className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">
+                          {contactNames.slice(0, 3).join(", ")}
+                          {contactNames.length > 3 &&
+                            ` +${contactNames.length - 3}`}
+                        </span>
+                      </div>
+                    )}
 
                     {project.description && (
                       <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
@@ -241,6 +291,8 @@ export function ProjectsDashboard() {
           <ProjectTable
             projects={filtered}
             venueMap={venueMap}
+            contactMap={contactMap}
+            projectToContacts={projectToContacts}
             onProjectSelect={handleSelect}
           />
         </div>

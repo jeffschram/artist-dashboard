@@ -10,9 +10,10 @@ import {
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, Mail, Phone, Building2 } from "lucide-react";
+import { ArrowUpDown, ChevronDown, Mail, Phone, Building2, Briefcase } from "lucide-react";
 import { Id } from "../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -27,34 +28,41 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { getPersonTypeBadgeClass } from "@/lib/personTypes";
+import { cn } from "@/lib/utils";
 
-interface ContactData {
+interface PersonData {
   _id: Id<"contacts">;
   name: string;
   email?: string;
   phone?: string;
   role?: string;
+  types?: string[];
   venueIds?: Id<"venues">[];
   notes?: string;
 }
 
-interface ContactTableProps {
-  contacts: ContactData[];
+interface PeopleTableProps {
+  contacts: PersonData[];
   venueMap: Map<Id<"venues">, string>;
+  projectMap: Map<Id<"projects">, string>;
+  contactToProjects: Map<Id<"contacts">, Id<"projects">[]>;
   onContactSelect: (contactId: Id<"contacts">) => void;
 }
 
-export function ContactTable({
+export function PeopleTable({
   contacts,
   venueMap,
+  projectMap,
+  contactToProjects,
   onContactSelect,
-}: ContactTableProps) {
+}: PeopleTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
 
-  const columns = useMemo<ColumnDef<ContactData>[]>(
+  const columns = useMemo<ColumnDef<PersonData>[]>(
     () => [
       {
         accessorKey: "name",
@@ -101,6 +109,33 @@ export function ContactTable({
           const role = row.getValue("role") as string | undefined;
           if (!role) return <span className="text-muted-foreground">—</span>;
           return <div className="text-sm">{role}</div>;
+        },
+      },
+      {
+        accessorKey: "types",
+        header: "Types",
+        cell: ({ row }) => {
+          const types = row.original.types || [];
+          if (types.length === 0)
+            return <span className="text-muted-foreground">—</span>;
+          return (
+            <div className="flex flex-wrap gap-1">
+              {types.slice(0, 2).map((type) => (
+                <Badge
+                  key={type}
+                  variant="secondary"
+                  className={cn("text-xs border-0", getPersonTypeBadgeClass(type))}
+                >
+                  {type}
+                </Badge>
+              ))}
+              {types.length > 2 && (
+                <span className="text-xs text-muted-foreground">
+                  +{types.length - 2}
+                </span>
+              )}
+            </div>
+          );
         },
       },
       {
@@ -165,6 +200,31 @@ export function ContactTable({
         },
       },
       {
+        id: "projects",
+        header: "Projects",
+        cell: ({ row }) => {
+          const projectIds = contactToProjects.get(row.original._id) || [];
+          const projectNames = projectIds
+            .map((id) => projectMap.get(id))
+            .filter(Boolean);
+          if (projectNames.length === 0)
+            return <span className="text-muted-foreground">—</span>;
+          return (
+            <div className="flex items-center gap-1.5 text-sm">
+              <Briefcase className="h-3 w-3 text-muted-foreground shrink-0" />
+              <span>
+                {projectNames.slice(0, 2).join(", ")}
+                {projectNames.length > 2 && (
+                  <span className="text-muted-foreground ml-1">
+                    +{projectNames.length - 2}
+                  </span>
+                )}
+              </span>
+            </div>
+          );
+        },
+      },
+      {
         id: "notes",
         accessorKey: "notes",
         header: "Notes",
@@ -179,7 +239,7 @@ export function ContactTable({
         },
       },
     ],
-    [onContactSelect, venueMap],
+    [onContactSelect, venueMap, projectMap, contactToProjects],
   );
 
   const table = useReactTable({
@@ -284,7 +344,7 @@ export function ContactTable({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No contacts found.
+                  No people found.
                 </TableCell>
               </TableRow>
             )}

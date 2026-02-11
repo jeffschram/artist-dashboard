@@ -4,16 +4,16 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Dashboard } from "./components/Dashboard";
 import { ProjectsDashboard } from "./components/ProjectsDashboard";
-import { ContactsDashboard } from "./components/ContactsDashboard";
+import { PeopleDashboard } from "./components/PeopleDashboard";
 import { PasswordForm } from "./components/PasswordForm";
 import { LogOut, Building2, FolderKanban, Users } from "lucide-react";
 
-type Tab = "venues" | "projects" | "contacts";
+type Tab = "venues" | "projects" | "people";
 
 const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
   { key: "venues", label: "Venues", icon: <Building2 className="h-4 w-4" /> },
   { key: "projects", label: "Projects", icon: <FolderKanban className="h-4 w-4" /> },
-  { key: "contacts", label: "Contacts", icon: <Users className="h-4 w-4" /> },
+  { key: "people", label: "People", icon: <Users className="h-4 w-4" /> },
 ];
 
 export default function App() {
@@ -81,8 +81,8 @@ export default function App() {
           <TabsContent value="projects" className="mt-0 h-full">
             <ProjectsDashboard />
           </TabsContent>
-          <TabsContent value="contacts" className="mt-0 h-full">
-            <ContactsDashboard />
+          <TabsContent value="people" className="mt-0 h-full">
+            <PeopleDashboard />
           </TabsContent>
         </main>
       </Tabs>

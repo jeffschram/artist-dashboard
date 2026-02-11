@@ -75,12 +75,13 @@ export function VenueDetail({ venueId, isCreating, onClose }: VenueDetailProps) 
 
   const [selectedContactIds, setSelectedContactIds] = useState<Id<"contacts">[]>([]);
   const [selectedProjectIds, setSelectedProjectIds] = useState<Id<"projects">[]>([]);
-  const [showAddContact, setShowAddContact] = useState(false);
-  const [newContact, setNewContact] = useState({
+  const [showAddPerson, setShowAddPerson] = useState(false);
+  const [newPerson, setNewPerson] = useState({
     name: "",
     email: "",
     phone: "",
     role: "",
+    types: ["Venue Contact"] as string[],
   });
   const [showAddProject, setShowAddProject] = useState(false);
   const [newProject, setNewProject] = useState({
@@ -314,27 +315,28 @@ export function VenueDetail({ venueId, isCreating, onClose }: VenueDetailProps) 
   const contactsAnchor = useComboboxAnchor();
   const projectsAnchor = useComboboxAnchor();
 
-  const handleAddNewContact = async () => {
-    if (!newContact.name.trim()) {
-      toast.error("Contact name is required");
+  const handleAddNewPerson = async () => {
+    if (!newPerson.name.trim()) {
+      toast.error("Name is required");
       return;
     }
 
     try {
       const contactId = await createContact({
-        name: newContact.name,
-        email: newContact.email || undefined,
-        phone: newContact.phone || undefined,
-        role: newContact.role || undefined,
+        name: newPerson.name,
+        email: newPerson.email || undefined,
+        phone: newPerson.phone || undefined,
+        role: newPerson.role || undefined,
+        types: newPerson.types.length > 0 ? newPerson.types : undefined,
         venueIds: venueId ? [venueId] : [],
       });
       
       setSelectedContactIds((prev) => [...prev, contactId]);
-      setNewContact({ name: "", email: "", phone: "", role: "" });
-      setShowAddContact(false);
-      toast.success("Contact added");
+      setNewPerson({ name: "", email: "", phone: "", role: "", types: ["Venue Contact"] });
+      setShowAddPerson(false);
+      toast.success("Person added");
     } catch (error) {
-      toast.error("Failed to add contact");
+      toast.error("Failed to add person");
     }
   };
 
@@ -571,47 +573,47 @@ export function VenueDetail({ venueId, isCreating, onClose }: VenueDetailProps) 
           </CardContent>
         </Card>
 
-        {/* Contacts */}
+        {/* People */}
         <Card>
           <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle>Contacts</CardTitle>
+            <CardTitle>People</CardTitle>
             <Button
               variant="default"
               size="sm"
-              onClick={() => setShowAddContact(!showAddContact)}
+              onClick={() => setShowAddPerson(!showAddPerson)}
             >
               <Plus className="h-3.5 w-3.5" />
-              Add Contact
+              Add Person
             </Button>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Add new contact form */}
-            {showAddContact && (
+            {/* Add new person form */}
+            {showAddPerson && (
               <div className="p-4 bg-muted rounded-lg border space-y-3">
-                <h4 className="text-sm font-medium">New Contact</h4>
+                <h4 className="text-sm font-medium">New Person</h4>
                 <div className="grid grid-cols-2 gap-3">
                   <Input
                     type="text"
-                    value={newContact.name}
-                    onChange={(e) => setNewContact((p) => ({ ...p, name: e.target.value }))}
+                    value={newPerson.name}
+                    onChange={(e) => setNewPerson((p) => ({ ...p, name: e.target.value }))}
                     placeholder="Name *"
                   />
                   <Input
                     type="text"
-                    value={newContact.role}
-                    onChange={(e) => setNewContact((p) => ({ ...p, role: e.target.value }))}
+                    value={newPerson.role}
+                    onChange={(e) => setNewPerson((p) => ({ ...p, role: e.target.value }))}
                     placeholder="Role"
                   />
                   <Input
                     type="email"
-                    value={newContact.email}
-                    onChange={(e) => setNewContact((p) => ({ ...p, email: e.target.value }))}
+                    value={newPerson.email}
+                    onChange={(e) => setNewPerson((p) => ({ ...p, email: e.target.value }))}
                     placeholder="Email"
                   />
                   <Input
                     type="tel"
-                    value={newContact.phone}
-                    onChange={(e) => setNewContact((p) => ({ ...p, phone: e.target.value }))}
+                    value={newPerson.phone}
+                    onChange={(e) => setNewPerson((p) => ({ ...p, phone: e.target.value }))}
                     placeholder="Phone"
                   />
                 </div>
@@ -620,22 +622,22 @@ export function VenueDetail({ venueId, isCreating, onClose }: VenueDetailProps) 
                     variant="ghost"
                     size="sm"
                     onClick={() => {
-                      setShowAddContact(false);
-                      setNewContact({ name: "", email: "", phone: "", role: "" });
+                      setShowAddPerson(false);
+                      setNewPerson({ name: "", email: "", phone: "", role: "", types: ["Venue Contact"] });
                     }}
                   >
                     Cancel
                   </Button>
-                  <Button size="sm" onClick={handleAddNewContact}>
+                  <Button size="sm" onClick={handleAddNewPerson}>
                     Add
                   </Button>
                 </div>
               </div>
             )}
 
-            {/* Multi-select existing contacts */}
+            {/* Multi-select existing people */}
             <div className="space-y-2">
-              <Label>Link existing contacts</Label>
+              <Label>Link existing people</Label>
               <Combobox
                 multiple
                 items={(allContacts ?? []).map((c) => c._id)}
@@ -660,13 +662,13 @@ export function VenueDetail({ venueId, isCreating, onClose }: VenueDetailProps) 
                             </ComboboxChip>
                           );
                         })}
-                        <ComboboxChipsInput placeholder="Search contacts..." />
+                        <ComboboxChipsInput placeholder="Search people..." />
                       </>
                     )}
                   </ComboboxValue>
                 </ComboboxChips>
                 <ComboboxContent anchor={contactsAnchor}>
-                  <ComboboxEmpty>No contacts found.</ComboboxEmpty>
+                  <ComboboxEmpty>No people found.</ComboboxEmpty>
                   <ComboboxList>
                     {(id: string) => {
                       const contact = allContacts?.find(

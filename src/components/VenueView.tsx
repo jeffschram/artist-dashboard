@@ -276,11 +276,11 @@ export function VenueView({
           </Card>
         )}
 
-        {/* Contacts */}
+        {/* People */}
         {contactsWithData.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Contacts</CardTitle>
+              <CardTitle>People</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {contactsWithData.map((contact) => (

@@ -73,11 +73,34 @@ const applicationTables = {
     .index("by_project", ["projectId"])
     .index("by_collaborator", ["collaboratorId"]),
 
+  // Join table: which contacts (people) are associated with which projects
+  projectContacts: defineTable({
+    projectId: v.id("projects"),
+    contactId: v.id("contacts"),
+  })
+    .index("by_project", ["projectId"])
+    .index("by_contact", ["contactId"]),
+
   contacts: defineTable({
     name: v.string(),
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
     role: v.optional(v.string()),
+    types: v.optional(
+      v.array(
+        v.union(
+          v.literal("Venue Contact"),
+          v.literal("Colleague"),
+          v.literal("Artist"),
+          v.literal("Client"),
+          v.literal("Patron"),
+          v.literal("Customer"),
+          v.literal("Agent"),
+          v.literal("Vendor"),
+          v.literal("Other"),
+        ),
+      ),
+    ),
     notes: v.optional(v.string()),
     venueIds: v.optional(v.array(v.id("venues"))), // Optional during migration
     venueId: v.optional(v.id("venues")), // Legacy field - will be removed after migration

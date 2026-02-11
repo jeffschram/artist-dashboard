@@ -50,9 +50,16 @@ export function ProjectDetail({
     projectId ? { id: projectId } : "skip",
   );
   const venues = useQuery(api.venues.list);
+  const allContacts = useQuery(api.contacts.list);
+  const linkedContactIds = useQuery(
+    api.projects.listContactsByProject,
+    projectId ? { projectId } : "skip",
+  );
   const createProject = useMutation(api.projects.create);
   const updateProject = useMutation(api.projects.update);
   const deleteProject = useMutation(api.projects.remove);
+  const linkContact = useMutation(api.projects.linkContact);
+  const unlinkContact = useMutation(api.projects.unlinkContact);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -66,7 +73,15 @@ export function ProjectDetail({
     profit: "",
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedContactIds, setSelectedContactIds] = useState<Id<"contacts">[]>([]);
   const venuesAnchor = useComboboxAnchor();
+  const peopleAnchor = useComboboxAnchor();
+
+  useEffect(() => {
+    if (linkedContactIds) {
+      setSelectedContactIds(linkedContactIds);
+    }
+  }, [linkedContactIds]);
 
   useEffect(() => {
     if (project && !isCreating) {
@@ -101,10 +116,6 @@ export function ProjectDetail({
       toast.error("Project name is required");
       return;
     }
-    if (formData.venueIds.length === 0) {
-      toast.error("Please select at least one venue");
-      return;
-    }
 
     setIsSaving(true);
     try {
@@ -121,10 +132,29 @@ export function ProjectDetail({
       };
 
       if (isCreating) {
-        await createProject(payload);
+        const newProjectId = await createProject(payload);
+        
+        // Link selected contacts to the new project
+        for (const contactId of selectedContactIds) {
+          await linkContact({ projectId: newProjectId, contactId });
+        }
+        
         toast.success("Project created");
       } else if (projectId) {
         await updateProject({ id: projectId, ...payload });
+        
+        // Update contact links
+        const currentContactIds = linkedContactIds || [];
+        const added = selectedContactIds.filter((id) => !currentContactIds.includes(id));
+        const removed = currentContactIds.filter((id) => !selectedContactIds.includes(id));
+        
+        for (const contactId of added) {
+          await linkContact({ projectId, contactId });
+        }
+        for (const contactId of removed) {
+          await unlinkContact({ projectId, contactId });
+        }
+        
         toast.success("Project updated");
       }
       onClose();
@@ -208,7 +238,7 @@ export function ProjectDetail({
             </div>
 
             <div className="space-y-2">
-              <Label>Venues * (select one or more)</Label>
+              <Label>Venues (optional)</Label>
               <Combobox
                 multiple
                 items={allVenues.map((v) => v._id)}
@@ -339,6 +369,70 @@ export function ProjectDetail({
                   step="0.01"
                 />
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* People */}
+        <Card>
+          <CardHeader>
+            <CardTitle>People</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Link people to this project</Label>
+              <Combobox
+                multiple
+                items={(allContacts ?? []).map((c) => c._id)}
+                itemToStringValue={(id) => {
+                  const c = allContacts?.find((c) => c._id === id);
+                  return c?.name ?? "";
+                }}
+                value={selectedContactIds}
+                onValueChange={(ids) =>
+                  setSelectedContactIds(ids as Id<"contacts">[])
+                }
+              >
+                <ComboboxChips ref={peopleAnchor}>
+                  <ComboboxValue>
+                    {(values: string[]) => (
+                      <>
+                        {values.map((id) => {
+                          const c = allContacts?.find((c) => c._id === id);
+                          return (
+                            <ComboboxChip key={id}>
+                              {c?.name ?? "Unknown"}
+                            </ComboboxChip>
+                          );
+                        })}
+                        <ComboboxChipsInput placeholder="Search people..." />
+                      </>
+                    )}
+                  </ComboboxValue>
+                </ComboboxChips>
+                <ComboboxContent anchor={peopleAnchor}>
+                  <ComboboxEmpty>No people found.</ComboboxEmpty>
+                  <ComboboxList>
+                    {(id: string) => {
+                      const contact = allContacts?.find((c) => c._id === id);
+                      return (
+                        <ComboboxItem key={id} value={id}>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium truncate">
+                              {contact?.name}
+                            </div>
+                            {contact?.role && (
+                              <div className="text-xs text-muted-foreground">
+                                {contact.role}
+                              </div>
+                            )}
+                          </div>
+                        </ComboboxItem>
+                      );
+                    }}
+                  </ComboboxList>
+                </ComboboxContent>
+              </Combobox>
             </div>
           </CardContent>
         </Card>
