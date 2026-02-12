@@ -107,6 +107,52 @@ const applicationTables = {
     collaboratorId: v.optional(v.id("collaborators")),
   })
     .index("by_collaborator", ["collaboratorId"]),
+
+  tasks: defineTable({
+    title: v.string(),
+    description: v.optional(v.string()),
+    status: v.union(
+      v.literal("To Do"),
+      v.literal("In Progress"),
+      v.literal("Completed"),
+      v.literal("Cancelled"),
+    ),
+    priority: v.union(
+      v.literal("Low"),
+      v.literal("Medium"),
+      v.literal("High"),
+      v.literal("Urgent"),
+    ),
+    dueDate: v.optional(v.string()),
+    completedDate: v.optional(v.string()),
+    notes: v.optional(v.string()),
+  })
+    .index("by_status", ["status"])
+    .index("by_due_date", ["dueDate"]),
+
+  // Join table: tasks associated with venues
+  taskVenues: defineTable({
+    taskId: v.id("tasks"),
+    venueId: v.id("venues"),
+  })
+    .index("by_task", ["taskId"])
+    .index("by_venue", ["venueId"]),
+
+  // Join table: tasks associated with projects
+  taskProjects: defineTable({
+    taskId: v.id("tasks"),
+    projectId: v.id("projects"),
+  })
+    .index("by_task", ["taskId"])
+    .index("by_project", ["projectId"]),
+
+  // Join table: tasks assigned to people (contacts)
+  taskContacts: defineTable({
+    taskId: v.id("tasks"),
+    contactId: v.id("contacts"),
+  })
+    .index("by_task", ["taskId"])
+    .index("by_contact", ["contactId"]),
 };
 
 export default defineSchema({

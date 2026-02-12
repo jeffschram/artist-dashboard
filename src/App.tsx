@@ -5,15 +5,20 @@ import { Button } from "@/components/ui/button";
 import { Dashboard } from "./components/Dashboard";
 import { ProjectsDashboard } from "./components/ProjectsDashboard";
 import { PeopleDashboard } from "./components/PeopleDashboard";
+import { TasksDashboard } from "./components/TasksDashboard";
 import { PasswordForm } from "./components/PasswordForm";
-import { LogOut, Building2, FolderKanban, Users } from "lucide-react";
+import { LogOut, Building2, FolderKanban, Users, CheckSquare } from "lucide-react";
 
-type Tab = "venues" | "projects" | "people";
+type Tab = "venues" | "projects" | "people" | "tasks";
 
-const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
+const DATA_TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
   { key: "venues", label: "Venues", icon: <Building2 className="h-4 w-4" /> },
   { key: "projects", label: "Projects", icon: <FolderKanban className="h-4 w-4" /> },
   { key: "people", label: "People", icon: <Users className="h-4 w-4" /> },
+];
+
+const ACTION_TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
+  { key: "tasks", label: "Tasks", icon: <CheckSquare className="h-4 w-4" /> },
 ];
 
 export default function App() {
@@ -59,9 +64,22 @@ export default function App() {
               Logout
             </Button>
           </div>
-          <nav className="px-6 -mb-px">
+          <nav className="px-6 -mb-px flex items-center gap-6">
             <TabsList className="bg-transparent h-auto p-0 gap-0">
-              {TABS.map((tab) => (
+              {DATA_TABS.map((tab) => (
+                <TabsTrigger
+                  key={tab.key}
+                  value={tab.key}
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2.5 gap-2"
+                >
+                  {tab.icon}
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            <div className="h-6 w-px bg-border" />
+            <TabsList className="bg-transparent h-auto p-0 gap-0">
+              {ACTION_TABS.map((tab) => (
                 <TabsTrigger
                   key={tab.key}
                   value={tab.key}
@@ -83,6 +101,9 @@ export default function App() {
           </TabsContent>
           <TabsContent value="people" className="mt-0 h-full">
             <PeopleDashboard />
+          </TabsContent>
+          <TabsContent value="tasks" className="mt-0 h-full">
+            <TasksDashboard />
           </TabsContent>
         </main>
       </Tabs>
