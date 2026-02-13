@@ -35,6 +35,7 @@ type OutreachMethod =
   | "Other";
 type OutreachDirection = "Outbound" | "Inbound";
 type OutreachStatus =
+  | "To Do"
   | "Sent"
   | "Awaiting Response"
   | "Responded"
@@ -70,7 +71,7 @@ export function OutreachDetail({
     method: "Email" as OutreachMethod,
     direction: "Outbound" as OutreachDirection,
     date: new Date().toISOString().slice(0, 10),
-    status: "Sent" as OutreachStatus,
+    status: "To Do" as OutreachStatus,
     followUpDate: "",
     notes: "",
     venueId: "" as string,
@@ -302,6 +303,7 @@ export function OutreachDetail({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="To Do">To Do</SelectItem>
                     <SelectItem value="Sent">Sent</SelectItem>
                     <SelectItem value="Awaiting Response">
                       Awaiting Response
