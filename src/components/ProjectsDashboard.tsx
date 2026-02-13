@@ -4,6 +4,7 @@ import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { SlideOver } from "./SlideOver";
 import { ProjectDetail } from "./ProjectDetail";
+import { TaskDetail } from "./TaskDetail";
 import { ProjectTable } from "./ProjectTable";
 import {
   Plus,
@@ -21,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 
-type Mode = "idle" | "editing" | "creating";
+type Mode = "idle" | "editing" | "creating" | "creating-task";
 type ViewMode = "cards" | "table";
 
 function getStatusBadgeClass(status: string) {
@@ -113,6 +114,20 @@ export function ProjectsDashboard() {
   const handleClose = () => {
     setSelectedProjectId(null);
     setMode("idle");
+  };
+
+  const handleCreateTask = (projectId: Id<"projects">) => {
+    setSelectedProjectId(projectId);
+    setMode("creating-task");
+  };
+
+  const handleCloseTaskDetail = () => {
+    // Return to project edit view
+    if (selectedProjectId) {
+      setMode("editing");
+    } else {
+      setMode("idle");
+    }
   };
 
   const statusCounts = projects.reduce(
@@ -300,11 +315,21 @@ export function ProjectsDashboard() {
 
       {/* Slide-over */}
       <SlideOver isOpen={mode !== "idle"} onClose={handleClose}>
-        <ProjectDetail
-          projectId={selectedProjectId}
-          isCreating={mode === "creating"}
-          onClose={handleClose}
-        />
+        {mode === "creating-task" ? (
+          <TaskDetail
+            taskId={null}
+            isCreating
+            onClose={handleCloseTaskDetail}
+            initialProjectIds={selectedProjectId ? [selectedProjectId] : undefined}
+          />
+        ) : (
+          <ProjectDetail
+            projectId={selectedProjectId}
+            isCreating={mode === "creating"}
+            onClose={handleClose}
+            onCreateTask={handleCreateTask}
+          />
+        )}
       </SlideOver>
     </div>
   );

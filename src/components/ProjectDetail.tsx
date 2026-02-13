@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
-import { X, Save, Trash2 } from "lucide-react";
+import { X, Save, Trash2, CheckSquare } from "lucide-react";
 import { toast } from "sonner";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,8 @@ interface ProjectDetailProps {
   /** Pre-fill venue when creating from a venue view */
   defaultVenueId?: Id<"venues">;
   onClose: () => void;
+  /** Create a task pre-linked to this project */
+  onCreateTask?: (projectId: Id<"projects">) => void;
 }
 
 type ProjectStatus = "Planning" | "In Progress" | "Completed" | "Cancelled";
@@ -44,6 +46,7 @@ export function ProjectDetail({
   isCreating,
   defaultVenueId,
   onClose,
+  onCreateTask,
 }: ProjectDetailProps) {
   const project = useQuery(
     api.projects.get,
@@ -197,6 +200,16 @@ export function ProjectDetail({
             {isCreating ? "New Project" : "Edit Project"}
           </h2>
           <div className="flex items-center gap-2">
+            {!isCreating && projectId && onCreateTask && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onCreateTask(projectId)}
+              >
+                <CheckSquare className="h-4 w-4" />
+                Create Task
+              </Button>
+            )}
             {!isCreating && (
               <Button
                 variant="ghost"

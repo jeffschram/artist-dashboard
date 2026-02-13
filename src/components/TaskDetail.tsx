@@ -34,12 +34,25 @@ interface TaskDetailProps {
   taskId: Id<"tasks"> | null;
   isCreating: boolean;
   onClose: () => void;
+  /** Pre-fill venues when creating from a venue view */
+  initialVenueIds?: Id<"venues">[];
+  /** Pre-fill projects when creating from a project view */
+  initialProjectIds?: Id<"projects">[];
+  /** Pre-fill people when creating from a person view */
+  initialContactIds?: Id<"contacts">[];
 }
 
 type TaskStatus = "To Do" | "In Progress" | "Completed" | "Cancelled";
 type TaskPriority = "Low" | "Medium" | "High" | "Urgent";
 
-export function TaskDetail({ taskId, isCreating, onClose }: TaskDetailProps) {
+export function TaskDetail({
+  taskId,
+  isCreating,
+  onClose,
+  initialVenueIds,
+  initialProjectIds,
+  initialContactIds,
+}: TaskDetailProps) {
   const task = useQuery(api.tasks.get, taskId ? { id: taskId } : "skip");
   const venues = useQuery(api.venues.list);
   const projects = useQuery(api.projects.list);
@@ -125,8 +138,12 @@ export function TaskDetail({ taskId, isCreating, onClose }: TaskDetailProps) {
         completedDate: "",
         notes: "",
       });
+      // Pre-fill linked entities when creating from a detail view
+      if (initialVenueIds?.length) setSelectedVenueIds(initialVenueIds);
+      if (initialProjectIds?.length) setSelectedProjectIds(initialProjectIds);
+      if (initialContactIds?.length) setSelectedContactIds(initialContactIds);
     }
-  }, [task, isCreating]);
+  }, [task, isCreating, initialVenueIds, initialProjectIds, initialContactIds]);
 
   const handleSave = async () => {
     if (!formData.title.trim()) {
