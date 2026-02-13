@@ -11,8 +11,10 @@
 import type * as auth from "../auth.js";
 import type * as collaborators from "../collaborators.js";
 import type * as contacts from "../contacts.js";
+import type * as dashboard from "../dashboard.js";
 import type * as http from "../http.js";
 import type * as migrations from "../migrations.js";
+import type * as outreach from "../outreach.js";
 import type * as projects from "../projects.js";
 import type * as router from "../router.js";
 import type * as seedVenuesData from "../seedVenuesData.js";
@@ -30,8 +32,10 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   collaborators: typeof collaborators;
   contacts: typeof contacts;
+  dashboard: typeof dashboard;
   http: typeof http;
   migrations: typeof migrations;
+  outreach: typeof outreach;
   projects: typeof projects;
   router: typeof router;
   seedVenuesData: typeof seedVenuesData;

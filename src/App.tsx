@@ -1,35 +1,72 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Toaster } from "@/components/ui/sonner";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Dashboard } from "./components/Dashboard";
 import { ProjectsDashboard } from "./components/ProjectsDashboard";
 import { PeopleDashboard } from "./components/PeopleDashboard";
 import { TasksDashboard } from "./components/TasksDashboard";
+import { OutreachDashboard } from "./components/OutreachDashboard";
+import { HomeDashboard } from "./components/HomeDashboard";
+import { GlobalSearch } from "./components/GlobalSearch";
 import { PasswordForm } from "./components/PasswordForm";
-import { LogOut, Building2, FolderKanban, Users, CheckSquare } from "lucide-react";
+import {
+  LogOut,
+  Building2,
+  FolderKanban,
+  Users,
+  CheckSquare,
+  Send,
+  Home,
+  Search,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
-type Tab = "venues" | "projects" | "people" | "tasks";
+type Tab = "home" | "venues" | "projects" | "people" | "tasks" | "outreach";
 
-const DATA_TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
-  { key: "venues", label: "Venues", icon: <Building2 className="h-4 w-4" /> },
-  { key: "projects", label: "Projects", icon: <FolderKanban className="h-4 w-4" /> },
-  { key: "people", label: "People", icon: <Users className="h-4 w-4" /> },
+interface NavItem {
+  key: Tab;
+  label: string;
+  icon: React.ReactNode;
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { key: "home", label: "Home", icon: <Home className="h-5 w-5" /> },
+  { key: "venues", label: "Venues", icon: <Building2 className="h-5 w-5" /> },
+  { key: "projects", label: "Projects", icon: <FolderKanban className="h-5 w-5" /> },
+  { key: "people", label: "People", icon: <Users className="h-5 w-5" /> },
+  { key: "tasks", label: "Tasks", icon: <CheckSquare className="h-5 w-5" /> },
+  { key: "outreach", label: "Outreach", icon: <Send className="h-5 w-5" /> },
 ];
 
-const ACTION_TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
-  { key: "tasks", label: "Tasks", icon: <CheckSquare className="h-4 w-4" /> },
-];
+type NavigationTarget = {
+  tab: Tab;
+  entityId: string;
+} | null;
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<Tab>("venues");
+  const [activeTab, setActiveTab] = useState<Tab>("home");
+  const [pendingNavigation, setPendingNavigation] =
+    useState<NavigationTarget>(null);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   useEffect(() => {
     const authStatus = localStorage.getItem("artistDashboardAuth");
     setIsAuthenticated(authStatus === "true");
     setIsLoading(false);
+  }, []);
+
+  // Cmd+K keyboard shortcut for global search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   const handleLogout = () => {
@@ -40,6 +77,22 @@ export default function App() {
   const handleAuthenticated = () => {
     setIsAuthenticated(true);
   };
+
+  const handleNavigateToEntity = useCallback(
+    (tab: Tab, entityId: string) => {
+      setPendingNavigation({ tab, entityId });
+      setActiveTab(tab);
+    },
+    [],
+  );
+
+  const handleNavigationConsumed = useCallback(() => {
+    setPendingNavigation(null);
+  }, []);
+
+  const handleSwitchTab = useCallback((tab: Tab) => {
+    setActiveTab(tab);
+  }, []);
 
   if (isLoading) {
     return (
@@ -54,59 +107,129 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-muted/40">
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as Tab)} className="flex flex-col flex-1">
-        <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
-          <div className="h-16 flex justify-between items-center px-6">
-            <h2 className="text-xl font-semibold">⚡️Artist Dashboard</h2>
-            <Button variant="ghost" size="sm" onClick={handleLogout}>
-              <LogOut className="h-4 w-4" />
-              Logout
-            </Button>
-          </div>
-          <nav className="px-6 -mb-px flex items-center gap-6">
-            <TabsList className="bg-transparent h-auto p-0 gap-0">
-              {DATA_TABS.map((tab) => (
-                <TabsTrigger
-                  key={tab.key}
-                  value={tab.key}
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2.5 gap-2"
+    <div className="min-h-screen flex bg-muted/40">
+      {/* Sidebar */}
+      <aside className="w-64 bg-background border-r flex flex-col fixed inset-y-0 left-0 z-20">
+        {/* Logo/Title */}
+        <div className="h-16 flex items-center px-6 border-b">
+          <h2 className="text-lg font-semibold">⚡️Artist Dashboard</h2>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto py-4">
+          <ul className="space-y-1 px-3">
+            {NAV_ITEMS.map((item) => (
+              <li key={item.key}>
+                <button
+                  onClick={() => setActiveTab(item.key)}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                    activeTab === item.key
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
                 >
-                  {tab.icon}
-                  {tab.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-            <div className="h-6 w-px bg-border" />
-            <TabsList className="bg-transparent h-auto p-0 gap-0">
-              {ACTION_TABS.map((tab) => (
-                <TabsTrigger
-                  key={tab.key}
-                  value={tab.key}
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2.5 gap-2"
-                >
-                  {tab.icon}
-                  {tab.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </nav>
-        </header>
-        <main className="flex-1">
-          <TabsContent value="venues" className="mt-0 h-full">
-            <Dashboard />
-          </TabsContent>
-          <TabsContent value="projects" className="mt-0 h-full">
-            <ProjectsDashboard />
-          </TabsContent>
-          <TabsContent value="people" className="mt-0 h-full">
-            <PeopleDashboard />
-          </TabsContent>
-          <TabsContent value="tasks" className="mt-0 h-full">
-            <TasksDashboard />
-          </TabsContent>
-        </main>
-      </Tabs>
+                  {item.icon}
+                  {item.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        {/* Footer actions */}
+        <div className="p-3 border-t space-y-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsSearchOpen(true)}
+            className="w-full justify-start gap-3 text-muted-foreground"
+          >
+            <Search className="h-5 w-5" />
+            <span className="flex-1 text-left">Search</span>
+            <kbd className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-mono">
+              ⌘K
+            </kbd>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLogout}
+            className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive"
+          >
+            <LogOut className="h-5 w-5" />
+            Logout
+          </Button>
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <main className="flex-1 ml-64">
+        {activeTab === "home" && (
+          <HomeDashboard
+            onNavigateToEntity={handleNavigateToEntity}
+            onSwitchTab={handleSwitchTab}
+          />
+        )}
+        {activeTab === "venues" && (
+          <Dashboard
+            initialEntityId={
+              pendingNavigation?.tab === "venues"
+                ? pendingNavigation.entityId
+                : undefined
+            }
+            onNavigationConsumed={handleNavigationConsumed}
+          />
+        )}
+        {activeTab === "projects" && (
+          <ProjectsDashboard
+            initialEntityId={
+              pendingNavigation?.tab === "projects"
+                ? pendingNavigation.entityId
+                : undefined
+            }
+            onNavigationConsumed={handleNavigationConsumed}
+          />
+        )}
+        {activeTab === "people" && (
+          <PeopleDashboard
+            initialEntityId={
+              pendingNavigation?.tab === "people"
+                ? pendingNavigation.entityId
+                : undefined
+            }
+            onNavigationConsumed={handleNavigationConsumed}
+          />
+        )}
+        {activeTab === "tasks" && (
+          <TasksDashboard
+            initialEntityId={
+              pendingNavigation?.tab === "tasks"
+                ? pendingNavigation.entityId
+                : undefined
+            }
+            onNavigationConsumed={handleNavigationConsumed}
+          />
+        )}
+        {activeTab === "outreach" && (
+          <OutreachDashboard
+            initialEntityId={
+              pendingNavigation?.tab === "outreach"
+                ? pendingNavigation.entityId
+                : undefined
+            }
+            onNavigationConsumed={handleNavigationConsumed}
+          />
+        )}
+      </main>
+
+      {/* Global Search */}
+      <GlobalSearch
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        onNavigateToEntity={handleNavigateToEntity}
+      />
+
       <Toaster />
     </div>
   );

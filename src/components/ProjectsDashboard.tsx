@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
@@ -50,7 +50,12 @@ function formatCurrency(value: number | undefined) {
   }).format(value);
 }
 
-export function ProjectsDashboard() {
+interface ProjectsDashboardProps {
+  initialEntityId?: string;
+  onNavigationConsumed?: () => void;
+}
+
+export function ProjectsDashboard({ initialEntityId, onNavigationConsumed }: ProjectsDashboardProps) {
   const projects = useQuery(api.projects.list);
   const venues = useQuery(api.venues.list);
   const contacts = useQuery(api.contacts.list);
@@ -61,6 +66,17 @@ export function ProjectsDashboard() {
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  useEffect(() => {
+    if (initialEntityId && projects) {
+      const found = projects.find((p) => p._id === initialEntityId);
+      if (found) {
+        setSelectedProjectId(found._id);
+        setMode("editing");
+      }
+      onNavigationConsumed?.();
+    }
+  }, [initialEntityId, projects, onNavigationConsumed]);
 
   if (
     projects === undefined ||
@@ -139,7 +155,7 @@ export function ProjectsDashboard() {
   );
 
   return (
-    <div className="h-[calc(100vh-7rem)]">
+    <div className="h-screen">
       {/* Toolbar */}
       <div className="px-6 py-4 bg-background border-b flex items-center gap-4 flex-wrap">
         <div className="relative flex-1 max-w-sm">

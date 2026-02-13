@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import {
   DndContext,
   DragEndEvent,
@@ -262,7 +262,12 @@ function TaskColumnBoard({
 
 type Mode = "idle" | "editing" | "creating";
 
-export function TasksDashboard() {
+interface TasksDashboardProps {
+  initialEntityId?: string;
+  onNavigationConsumed?: () => void;
+}
+
+export function TasksDashboard({ initialEntityId, onNavigationConsumed }: TasksDashboardProps) {
   const tasks = useQuery(api.tasks.list);
   const venues = useQuery(api.venues.list);
   const projects = useQuery(api.projects.list);
@@ -377,6 +382,19 @@ export function TasksDashboard() {
     if (!contacts) return new Map();
     return new Map(contacts.map((c) => [c._id, c]));
   }, [contacts]);
+
+  // ── cross-tab navigation ───────────────────────────────
+
+  useEffect(() => {
+    if (initialEntityId && tasks) {
+      const found = tasks.find((t) => t._id === initialEntityId);
+      if (found) {
+        setSelectedTaskId(found._id);
+        setMode("editing");
+      }
+      onNavigationConsumed?.();
+    }
+  }, [initialEntityId, tasks, onNavigationConsumed]);
 
   // ── loading guard (after ALL hooks) ──────────────────────
 
