@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { VenueBoard } from "./VenueBoard";
@@ -6,6 +6,7 @@ import { VenueView } from "./VenueView";
 import { VenueDetail } from "./VenueDetail";
 import { ProjectDetail } from "./ProjectDetail";
 import { TaskDetail } from "./TaskDetail";
+import { OutreachDetail } from "./OutreachDetail";
 import { SlideOver } from "./SlideOver";
 import { Id } from "../../convex/_generated/dataModel";
 
@@ -16,15 +17,32 @@ type Mode =
   | "creating"
   | "creating-project"
   | "editing-project"
-  | "creating-task";
+  | "creating-task"
+  | "creating-outreach";
 
-export function Dashboard() {
+interface DashboardProps {
+  initialEntityId?: string;
+  onNavigationConsumed?: () => void;
+}
+
+export function Dashboard({ initialEntityId, onNavigationConsumed }: DashboardProps) {
   const venues = useQuery(api.venues.list);
   const [selectedVenueId, setSelectedVenueId] = useState<Id<"venues"> | null>(
     null,
   );
   const [selectedProjectId, setSelectedProjectId] = useState<Id<"projects"> | null>(null);
   const [mode, setMode] = useState<Mode>("idle");
+
+  useEffect(() => {
+    if (initialEntityId && venues) {
+      const found = venues.find((v) => v._id === initialEntityId);
+      if (found) {
+        setSelectedVenueId(found._id);
+        setMode("viewing");
+      }
+      onNavigationConsumed?.();
+    }
+  }, [initialEntityId, venues, onNavigationConsumed]);
 
   if (venues === undefined) {
     return (
@@ -97,10 +115,22 @@ export function Dashboard() {
     }
   };
 
+  const handleLogOutreach = (_venueId: Id<"venues">) => {
+    setMode("creating-outreach");
+  };
+
+  const handleCloseOutreachDetail = () => {
+    if (selectedVenueId) {
+      setMode("viewing");
+    } else {
+      setMode("idle");
+    }
+  };
+
   const isSlideOverOpen = mode !== "idle";
 
   return (
-    <div className="h-[calc(100vh-7rem)]">
+    <div className="h-screen">
       {/* Full-width board */}
       <VenueBoard
         venues={venues}
@@ -119,6 +149,7 @@ export function Dashboard() {
             onAddProject={handleAddProject}
             onEditProject={handleEditProject}
             onCreateTask={handleCreateTask}
+            onLogOutreach={handleLogOutreach}
           />
         ) : mode === "editing" || mode === "creating" ? (
           <VenueDetail
@@ -139,6 +170,13 @@ export function Dashboard() {
             isCreating
             onClose={handleCloseTaskDetail}
             initialVenueIds={selectedVenueId ? [selectedVenueId] : undefined}
+          />
+        ) : mode === "creating-outreach" ? (
+          <OutreachDetail
+            outreachId={null}
+            isCreating
+            onClose={handleCloseOutreachDetail}
+            initialVenueId={selectedVenueId ?? undefined}
           />
         ) : null}
       </SlideOver>

@@ -153,6 +153,43 @@ const applicationTables = {
   })
     .index("by_task", ["taskId"])
     .index("by_contact", ["contactId"]),
+
+  // Outreach log — tracks correspondence with venues and people
+  outreach: defineTable({
+    contactId: v.optional(v.id("contacts")),
+    venueId: v.optional(v.id("venues")),
+    projectId: v.optional(v.id("projects")),
+    method: v.union(
+      v.literal("Email"),
+      v.literal("Phone"),
+      v.literal("In Person"),
+      v.literal("Submission Form"),
+      v.literal("Social Media"),
+      v.literal("Other"),
+    ),
+    direction: v.union(
+      v.literal("Outbound"),
+      v.literal("Inbound"),
+    ),
+    date: v.string(),
+    subject: v.string(),
+    notes: v.optional(v.string()),
+    status: v.union(
+      v.literal("Sent"),
+      v.literal("Awaiting Response"),
+      v.literal("Responded"),
+      v.literal("Follow Up Needed"),
+      v.literal("No Response"),
+      v.literal("Declined"),
+      v.literal("Accepted"),
+    ),
+    followUpDate: v.optional(v.string()),
+  })
+    .index("by_venue", ["venueId"])
+    .index("by_contact", ["contactId"])
+    .index("by_date", ["date"])
+    .index("by_status", ["status"])
+    .index("by_follow_up_date", ["followUpDate"]),
 };
 
 export default defineSchema({

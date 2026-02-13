@@ -16,6 +16,9 @@ import {
   Calendar,
   DollarSign,
   CheckSquare,
+  Send,
+  ArrowUpRight,
+  ArrowDownLeft,
 } from "lucide-react";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { toast } from "sonner";
@@ -31,6 +34,7 @@ interface VenueViewProps {
   onAddProject?: (venueId: Id<"venues">) => void;
   onEditProject?: (projectId: Id<"projects">) => void;
   onCreateTask?: (venueId: Id<"venues">) => void;
+  onLogOutreach?: (venueId: Id<"venues">) => void;
 }
 
 function getStatusBadgeClass(status: string) {
@@ -96,6 +100,27 @@ function formatCurrency(value: number | undefined) {
   }).format(value);
 }
 
+function getOutreachStatusBadgeClass(status: string) {
+  switch (status) {
+    case "Sent":
+      return "bg-blue-100 text-blue-800 hover:bg-blue-100";
+    case "Awaiting Response":
+      return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
+    case "Responded":
+      return "bg-green-100 text-green-800 hover:bg-green-100";
+    case "Follow Up Needed":
+      return "bg-orange-100 text-orange-800 hover:bg-orange-100";
+    case "No Response":
+      return "bg-gray-100 text-gray-600 hover:bg-gray-100";
+    case "Declined":
+      return "bg-red-100 text-red-800 hover:bg-red-100";
+    case "Accepted":
+      return "bg-emerald-100 text-emerald-800 hover:bg-emerald-100";
+    default:
+      return "bg-gray-100 text-gray-800 hover:bg-gray-100";
+  }
+}
+
 export function VenueView({
   venueId,
   onEdit,
@@ -103,10 +128,12 @@ export function VenueView({
   onAddProject,
   onEditProject,
   onCreateTask,
+  onLogOutreach,
 }: VenueViewProps) {
   const venue = useQuery(api.venues.get, { id: venueId });
   const venueProjects = useQuery(api.projects.listByVenue, { venueId });
   const venueContacts = useQuery(api.contacts.listByVenue, { venueId });
+  const venueOutreach = useQuery(api.outreach.listByVenue, { venueId });
   const updateVenue = useMutation(api.venues.update);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
     "idle",
@@ -206,6 +233,14 @@ export function VenueView({
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onLogOutreach?.(venueId)}
+            >
+              <Send className="h-4 w-4" />
+              Log Outreach
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -381,6 +416,66 @@ export function VenueView({
                     </div>
                   </button>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Outreach History */}
+        {venueOutreach && venueOutreach.length > 0 && (
+          <Card>
+            <CardHeader className="flex-row items-center justify-between space-y-0">
+              <CardTitle className="flex items-center gap-2">
+                <Send className="h-4 w-4 text-muted-foreground" />
+                Outreach History
+              </CardTitle>
+              <Badge variant="secondary" className="text-xs">
+                {venueOutreach.length}
+              </Badge>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {venueOutreach
+                  .sort((a, b) => (b.date > a.date ? 1 : -1))
+                  .slice(0, 5)
+                  .map((entry) => (
+                    <div
+                      key={entry._id}
+                      className="p-3 bg-muted rounded-lg border"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          {entry.direction === "Outbound" ? (
+                            <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground" />
+                          ) : (
+                            <ArrowDownLeft className="h-3.5 w-3.5 text-muted-foreground" />
+                          )}
+                          <span className="font-medium text-sm">
+                            {entry.subject}
+                          </span>
+                        </div>
+                        <Badge
+                          variant="secondary"
+                          className={cn(
+                            "border-0 text-xs shrink-0",
+                            getOutreachStatusBadgeClass(entry.status),
+                          )}
+                        >
+                          {entry.status}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1 ml-[22px] text-xs text-muted-foreground">
+                        <span>{entry.date}</span>
+                        <span>·</span>
+                        <span>{entry.method}</span>
+                      </div>
+                    </div>
+                  ))}
+                {venueOutreach.length > 5 && (
+                  <p className="text-xs text-muted-foreground text-center pt-1">
+                    +{venueOutreach.length - 5} more
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>

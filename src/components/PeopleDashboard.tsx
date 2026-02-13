@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
@@ -17,7 +17,12 @@ import { cn } from "@/lib/utils";
 type Mode = "idle" | "editing" | "creating" | "creating-task";
 type ViewMode = "cards" | "table";
 
-export function PeopleDashboard() {
+interface PeopleDashboardProps {
+  initialEntityId?: string;
+  onNavigationConsumed?: () => void;
+}
+
+export function PeopleDashboard({ initialEntityId, onNavigationConsumed }: PeopleDashboardProps) {
   const contacts = useQuery(api.contacts.list);
   const venues = useQuery(api.venues.list);
   const projects = useQuery(api.projects.list);
@@ -28,6 +33,17 @@ export function PeopleDashboard() {
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
+
+  useEffect(() => {
+    if (initialEntityId && contacts) {
+      const found = contacts.find((c) => c._id === initialEntityId);
+      if (found) {
+        setSelectedContactId(found._id);
+        setMode("editing");
+      }
+      onNavigationConsumed?.();
+    }
+  }, [initialEntityId, contacts, onNavigationConsumed]);
 
   if (contacts === undefined || venues === undefined || projects === undefined || projectContactLinks === undefined) {
     return (
@@ -108,7 +124,7 @@ export function PeopleDashboard() {
   };
 
   return (
-    <div className="h-[calc(100vh-7rem)]">
+    <div className="h-screen">
       {/* Toolbar */}
       <div className="px-6 py-4 bg-background border-b space-y-4">
         <div className="flex items-center gap-4">
