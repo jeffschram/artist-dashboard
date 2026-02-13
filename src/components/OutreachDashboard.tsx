@@ -51,6 +51,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 // ── types & constants ──────────────────────────────────────
 
 type OutreachStatus =
+  | "To Do"
   | "Sent"
   | "Awaiting Response"
   | "Responded"
@@ -67,6 +68,7 @@ const STATUS_COLUMNS: {
   title: string;
   accent: string;
 }[] = [
+  { key: "To Do", title: "To Do", accent: "bg-slate-500" },
   { key: "Sent", title: "Sent", accent: "bg-blue-500" },
   {
     key: "Awaiting Response",
@@ -88,6 +90,8 @@ const ALL_COLUMN_KEYS = STATUS_COLUMNS.map((c) => c.key as string);
 
 function getStatusBadgeClass(status: string) {
   switch (status) {
+    case "To Do":
+      return "bg-slate-100 text-slate-700 hover:bg-slate-100";
     case "Sent":
       return "bg-blue-100 text-blue-800 hover:bg-blue-100";
     case "Awaiting Response":

@@ -175,6 +175,7 @@ const applicationTables = {
     subject: v.string(),
     notes: v.optional(v.string()),
     status: v.union(
+      v.literal("To Do"),
       v.literal("Sent"),
       v.literal("Awaiting Response"),
       v.literal("Responded"),
