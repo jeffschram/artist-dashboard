@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
-import { X, Save, Trash2 } from "lucide-react";
+import { X, Save, Trash2, CheckSquare } from "lucide-react";
 import { toast } from "sonner";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,8 @@ interface PersonDetailProps {
   /** Pre-fill venue when creating from a venue view */
   defaultVenueId?: Id<"venues">;
   onClose: () => void;
+  /** Create a task pre-linked to this person */
+  onCreateTask?: (contactId: Id<"contacts">) => void;
 }
 
 export function PersonDetail({
@@ -36,6 +38,7 @@ export function PersonDetail({
   isCreating,
   defaultVenueId,
   onClose,
+  onCreateTask,
 }: PersonDetailProps) {
   const contact = useQuery(
     api.contacts.get,
@@ -180,6 +183,16 @@ export function PersonDetail({
             {isCreating ? "New Person" : "Edit Person"}
           </h2>
           <div className="flex items-center gap-2">
+            {!isCreating && contactId && onCreateTask && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onCreateTask(contactId)}
+              >
+                <CheckSquare className="h-4 w-4" />
+                Create Task
+              </Button>
+            )}
             {!isCreating && (
               <Button
                 variant="ghost"

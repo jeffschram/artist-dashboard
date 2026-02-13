@@ -15,6 +15,7 @@ import {
   FolderKanban,
   Calendar,
   DollarSign,
+  CheckSquare,
 } from "lucide-react";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { toast } from "sonner";
@@ -29,6 +30,7 @@ interface VenueViewProps {
   onClose: () => void;
   onAddProject?: (venueId: Id<"venues">) => void;
   onEditProject?: (projectId: Id<"projects">) => void;
+  onCreateTask?: (venueId: Id<"venues">) => void;
 }
 
 function getStatusBadgeClass(status: string) {
@@ -100,6 +102,7 @@ export function VenueView({
   onClose,
   onAddProject,
   onEditProject,
+  onCreateTask,
 }: VenueViewProps) {
   const venue = useQuery(api.venues.get, { id: venueId });
   const venueProjects = useQuery(api.projects.listByVenue, { venueId });
@@ -203,6 +206,14 @@ export function VenueView({
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onCreateTask?.(venueId)}
+            >
+              <CheckSquare className="h-4 w-4" />
+              Create Task
+            </Button>
             <Button onClick={onEdit} size="sm">
               <Pencil className="h-4 w-4" />
               Edit

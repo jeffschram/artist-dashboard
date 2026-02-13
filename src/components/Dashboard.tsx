@@ -5,6 +5,7 @@ import { VenueBoard } from "./VenueBoard";
 import { VenueView } from "./VenueView";
 import { VenueDetail } from "./VenueDetail";
 import { ProjectDetail } from "./ProjectDetail";
+import { TaskDetail } from "./TaskDetail";
 import { SlideOver } from "./SlideOver";
 import { Id } from "../../convex/_generated/dataModel";
 
@@ -14,7 +15,8 @@ type Mode =
   | "editing"
   | "creating"
   | "creating-project"
-  | "editing-project";
+  | "editing-project"
+  | "creating-task";
 
 export function Dashboard() {
   const venues = useQuery(api.venues.list);
@@ -82,6 +84,19 @@ export function Dashboard() {
     }
   };
 
+  const handleCreateTask = (_venueId: Id<"venues">) => {
+    setMode("creating-task");
+  };
+
+  const handleCloseTaskDetail = () => {
+    // Return to venue view
+    if (selectedVenueId) {
+      setMode("viewing");
+    } else {
+      setMode("idle");
+    }
+  };
+
   const isSlideOverOpen = mode !== "idle";
 
   return (
@@ -103,6 +118,7 @@ export function Dashboard() {
             onClose={handleCloseSlideOver}
             onAddProject={handleAddProject}
             onEditProject={handleEditProject}
+            onCreateTask={handleCreateTask}
           />
         ) : mode === "editing" || mode === "creating" ? (
           <VenueDetail
@@ -116,6 +132,13 @@ export function Dashboard() {
             isCreating={mode === "creating-project"}
             defaultVenueId={selectedVenueId ?? undefined}
             onClose={handleCloseProjectDetail}
+          />
+        ) : mode === "creating-task" ? (
+          <TaskDetail
+            taskId={null}
+            isCreating
+            onClose={handleCloseTaskDetail}
+            initialVenueIds={selectedVenueId ? [selectedVenueId] : undefined}
           />
         ) : null}
       </SlideOver>
