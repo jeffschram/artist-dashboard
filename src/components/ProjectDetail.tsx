@@ -75,7 +75,9 @@ export function ProjectDetail({
   });
   const [isSaving, setIsSaving] = useState(false);
   const [isCreatingCard, setIsCreatingCard] = useState(false);
-  const [selectedContactIds, setSelectedContactIds] = useState<Id<"contacts">[]>([]);
+  const [selectedContactIds, setSelectedContactIds] = useState<
+    Id<"contacts">[]
+  >([]);
   const venuesAnchor = useComboboxAnchor();
   const peopleAnchor = useComboboxAnchor();
 
@@ -135,28 +137,32 @@ export function ProjectDetail({
 
       if (isCreating) {
         const newProjectId = await createProject(payload);
-        
+
         // Link selected contacts to the new project
         for (const contactId of selectedContactIds) {
           await linkContact({ projectId: newProjectId, contactId });
         }
-        
+
         toast.success("Project created");
       } else if (projectId) {
         await updateProject({ id: projectId, ...payload });
-        
+
         // Update contact links
         const currentContactIds = linkedContactIds || [];
-        const added = selectedContactIds.filter((id) => !currentContactIds.includes(id));
-        const removed = currentContactIds.filter((id) => !selectedContactIds.includes(id));
-        
+        const added = selectedContactIds.filter(
+          (id) => !currentContactIds.includes(id),
+        );
+        const removed = currentContactIds.filter(
+          (id) => !selectedContactIds.includes(id),
+        );
+
         for (const contactId of added) {
           await linkContact({ projectId, contactId });
         }
         for (const contactId of removed) {
           await unlinkContact({ projectId, contactId });
         }
-        
+
         toast.success("Project updated");
       }
       onClose();
@@ -187,7 +193,10 @@ export function ProjectDetail({
     try {
       const description = `Project: ${project.name}`;
 
-      const result = await createTrelloCard(`Project: ${project.name}`, description);
+      const result = await createTrelloCard(
+        `⚡ Project ToDo: ${project.name}`,
+        description,
+      );
       toast.success("Trello card created successfully!", {
         description: "Card added to TODAY'S INTENTIONS",
         action: {
