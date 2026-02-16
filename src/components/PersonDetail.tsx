@@ -65,7 +65,9 @@ export function PersonDetail({
   });
   const [isSaving, setIsSaving] = useState(false);
   const [isCreatingCard, setIsCreatingCard] = useState(false);
-  const [selectedProjectIds, setSelectedProjectIds] = useState<Id<"projects">[]>([]);
+  const [selectedProjectIds, setSelectedProjectIds] = useState<
+    Id<"projects">[]
+  >([]);
   const venuesAnchor = useComboboxAnchor();
   const typesAnchor = useComboboxAnchor();
   const projectsAnchor = useComboboxAnchor();
@@ -120,28 +122,32 @@ export function PersonDetail({
 
       if (isCreating) {
         const newContactId = await createContact(payload);
-        
+
         // Link selected projects to the new person
         for (const projectId of selectedProjectIds) {
           await linkProject({ projectId, contactId: newContactId });
         }
-        
+
         toast.success("Person created");
       } else if (contactId) {
         await updateContact({ id: contactId, ...payload });
-        
+
         // Update project links
         const currentProjectIds = linkedProjectIds || [];
-        const added = selectedProjectIds.filter((id) => !currentProjectIds.includes(id));
-        const removed = currentProjectIds.filter((id) => !selectedProjectIds.includes(id));
-        
+        const added = selectedProjectIds.filter(
+          (id) => !currentProjectIds.includes(id),
+        );
+        const removed = currentProjectIds.filter(
+          (id) => !selectedProjectIds.includes(id),
+        );
+
         for (const projectId of added) {
           await linkProject({ projectId, contactId });
         }
         for (const projectId of removed) {
           await unlinkProject({ projectId, contactId });
         }
-        
+
         toast.success("Person updated");
       }
       onClose();
@@ -178,7 +184,10 @@ export function PersonDetail({
         .filter(Boolean)
         .join("\n");
 
-      const result = await createTrelloCard(`Contact: ${contact.name}`, description);
+      const result = await createTrelloCard(
+        `⚡ Contact: ${contact.name}`,
+        description,
+      );
       toast.success("Trello card created successfully!", {
         description: "Card added to TODAY'S INTENTIONS",
         action: {
@@ -315,9 +324,7 @@ export function PersonDetail({
                     {(values: string[]) => (
                       <>
                         {values.map((type) => (
-                          <ComboboxChip key={type}>
-                            {type}
-                          </ComboboxChip>
+                          <ComboboxChip key={type}>{type}</ComboboxChip>
                         ))}
                         <ComboboxChipsInput placeholder="Select types..." />
                       </>

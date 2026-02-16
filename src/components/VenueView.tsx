@@ -175,7 +175,10 @@ export function VenueView({
         .filter(Boolean)
         .join("\n");
 
-      const result = await createTrelloCard(`Review: ${venue.name}`, description);
+      const result = await createTrelloCard(
+        `⚡ Venue Review: ${venue.name}`,
+        description,
+      );
       toast.success("Trello card created successfully!", {
         description: "Card added to TODAY'S INTENTIONS",
         action: {
