@@ -1,12 +1,12 @@
 // Trello Integration Utility
 // Creates cards in the Test Board using Trello REST API
 
-const TODAY_LIST_ID = "6991ec9bdee967bc62cbbbd1"; // "Today" list in Test Board
+const TODAY_LIST_ID = "641b4be1222e87a6e2e4d2a5"; // "TODAY'S INTENTIONS:" list in Holly Danger To Do board
 const TRELLO_API_KEY = import.meta.env.VITE_TRELLO_API_KEY;
 const TRELLO_TOKEN = import.meta.env.VITE_TRELLO_TOKEN;
 
 /**
- * Creates a Trello card in the "Today" list of the Test Board
+ * Creates a Trello card in the "TODAY'S INTENTIONS:" list
  * @param name - Card title
  * @param desc - Card description (supports markdown)
  * @returns Promise<{ id: string; url: string }> - Card ID and URL

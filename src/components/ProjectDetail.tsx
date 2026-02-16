@@ -189,7 +189,7 @@ export function ProjectDetail({
 
       const result = await createTrelloCard(`Project: ${project.name}`, description);
       toast.success("Trello card created successfully!", {
-        description: "Card added to Today list",
+        description: "Card added to TODAY'S INTENTIONS",
         action: {
           label: "View",
           onClick: () => window.open(result.url, "_blank"),
