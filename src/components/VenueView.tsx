@@ -15,10 +15,6 @@ import {
   FolderKanban,
   Calendar,
   DollarSign,
-  CheckSquare,
-  Send,
-  ArrowUpRight,
-  ArrowDownLeft,
 } from "lucide-react";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { toast } from "sonner";
@@ -26,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { createTrelloCard } from "@/lib/trello";
 
 interface VenueViewProps {
   venueId: Id<"venues">;
@@ -33,8 +30,6 @@ interface VenueViewProps {
   onClose: () => void;
   onAddProject?: (venueId: Id<"venues">) => void;
   onEditProject?: (projectId: Id<"projects">) => void;
-  onCreateTask?: (venueId: Id<"venues">) => void;
-  onLogOutreach?: (venueId: Id<"venues">) => void;
 }
 
 function getStatusBadgeClass(status: string) {
@@ -100,44 +95,21 @@ function formatCurrency(value: number | undefined) {
   }).format(value);
 }
 
-function getOutreachStatusBadgeClass(status: string) {
-  switch (status) {
-    case "Sent":
-      return "bg-blue-100 text-blue-800 hover:bg-blue-100";
-    case "Awaiting Response":
-      return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
-    case "Responded":
-      return "bg-green-100 text-green-800 hover:bg-green-100";
-    case "Follow Up Needed":
-      return "bg-orange-100 text-orange-800 hover:bg-orange-100";
-    case "No Response":
-      return "bg-gray-100 text-gray-600 hover:bg-gray-100";
-    case "Declined":
-      return "bg-red-100 text-red-800 hover:bg-red-100";
-    case "Accepted":
-      return "bg-emerald-100 text-emerald-800 hover:bg-emerald-100";
-    default:
-      return "bg-gray-100 text-gray-800 hover:bg-gray-100";
-  }
-}
-
 export function VenueView({
   venueId,
   onEdit,
   onClose,
   onAddProject,
   onEditProject,
-  onCreateTask,
-  onLogOutreach,
 }: VenueViewProps) {
   const venue = useQuery(api.venues.get, { id: venueId });
   const venueProjects = useQuery(api.projects.listByVenue, { venueId });
   const venueContacts = useQuery(api.contacts.listByVenue, { venueId });
-  const venueOutreach = useQuery(api.outreach.listByVenue, { venueId });
   const updateVenue = useMutation(api.venues.update);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
     "idle",
   );
+  const [isCreatingCard, setIsCreatingCard] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -182,6 +154,42 @@ export function VenueView({
     },
     [venue, venueId, updateVenue],
   );
+
+  const handleCreateTrelloCard = async () => {
+    if (!venue || isCreatingCard) return;
+
+    setIsCreatingCard(true);
+    try {
+      const location = venue.locations[0];
+      const locationStr = location
+        ? [location.city, location.state, location.country]
+            .filter(Boolean)
+            .join(", ")
+        : "";
+
+      const description = [
+        `Venue: ${venue.name}`,
+        venue.url ? `URL: ${venue.url}` : "",
+        locationStr ? `Location: ${locationStr}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+      const result = await createTrelloCard(`Review: ${venue.name}`, description);
+      toast.success("Trello card created successfully!", {
+        description: "Card added to Today list",
+        action: {
+          label: "View",
+          onClick: () => window.open(result.url, "_blank"),
+        },
+      });
+    } catch (error) {
+      console.error("Failed to create Trello card:", error);
+      toast.error("Failed to create Trello card");
+    } finally {
+      setIsCreatingCard(false);
+    }
+  };
 
   if (venue === undefined) {
     return (
@@ -236,18 +244,11 @@ export function VenueView({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onLogOutreach?.(venueId)}
+              onClick={handleCreateTrelloCard}
+              disabled={isCreatingCard}
             >
-              <Send className="h-4 w-4" />
-              Log Outreach
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onCreateTask?.(venueId)}
-            >
-              <CheckSquare className="h-4 w-4" />
-              Create Task
+              <ExternalLink className="h-4 w-4" />
+              {isCreatingCard ? "Creating..." : "Create Trello Card"}
             </Button>
             <Button onClick={onEdit} size="sm">
               <Pencil className="h-4 w-4" />
@@ -416,66 +417,6 @@ export function VenueView({
                     </div>
                   </button>
                 ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Outreach History */}
-        {venueOutreach && venueOutreach.length > 0 && (
-          <Card>
-            <CardHeader className="flex-row items-center justify-between space-y-0">
-              <CardTitle className="flex items-center gap-2">
-                <Send className="h-4 w-4 text-muted-foreground" />
-                Outreach History
-              </CardTitle>
-              <Badge variant="secondary" className="text-xs">
-                {venueOutreach.length}
-              </Badge>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {venueOutreach
-                  .sort((a, b) => (b.date > a.date ? 1 : -1))
-                  .slice(0, 5)
-                  .map((entry) => (
-                    <div
-                      key={entry._id}
-                      className="p-3 bg-muted rounded-lg border"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          {entry.direction === "Outbound" ? (
-                            <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground" />
-                          ) : (
-                            <ArrowDownLeft className="h-3.5 w-3.5 text-muted-foreground" />
-                          )}
-                          <span className="font-medium text-sm">
-                            {entry.subject}
-                          </span>
-                        </div>
-                        <Badge
-                          variant="secondary"
-                          className={cn(
-                            "border-0 text-xs shrink-0",
-                            getOutreachStatusBadgeClass(entry.status),
-                          )}
-                        >
-                          {entry.status}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-2 mt-1 ml-[22px] text-xs text-muted-foreground">
-                        <span>{entry.date}</span>
-                        <span>·</span>
-                        <span>{entry.method}</span>
-                      </div>
-                    </div>
-                  ))}
-                {venueOutreach.length > 5 && (
-                  <p className="text-xs text-muted-foreground text-center pt-1">
-                    +{venueOutreach.length - 5} more
-                  </p>
-                )}
               </div>
             </CardContent>
           </Card>

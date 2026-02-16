@@ -5,8 +5,6 @@ import { VenueBoard } from "./VenueBoard";
 import { VenueView } from "./VenueView";
 import { VenueDetail } from "./VenueDetail";
 import { ProjectDetail } from "./ProjectDetail";
-import { TaskDetail } from "./TaskDetail";
-import { OutreachDetail } from "./OutreachDetail";
 import { SlideOver } from "./SlideOver";
 import { Id } from "../../convex/_generated/dataModel";
 
@@ -16,9 +14,7 @@ type Mode =
   | "editing"
   | "creating"
   | "creating-project"
-  | "editing-project"
-  | "creating-task"
-  | "creating-outreach";
+  | "editing-project";
 
 interface DashboardProps {
   initialEntityId?: string;
@@ -102,31 +98,6 @@ export function Dashboard({ initialEntityId, onNavigationConsumed }: DashboardPr
     }
   };
 
-  const handleCreateTask = (_venueId: Id<"venues">) => {
-    setMode("creating-task");
-  };
-
-  const handleCloseTaskDetail = () => {
-    // Return to venue view
-    if (selectedVenueId) {
-      setMode("viewing");
-    } else {
-      setMode("idle");
-    }
-  };
-
-  const handleLogOutreach = (_venueId: Id<"venues">) => {
-    setMode("creating-outreach");
-  };
-
-  const handleCloseOutreachDetail = () => {
-    if (selectedVenueId) {
-      setMode("viewing");
-    } else {
-      setMode("idle");
-    }
-  };
-
   const isSlideOverOpen = mode !== "idle";
 
   return (
@@ -148,8 +119,6 @@ export function Dashboard({ initialEntityId, onNavigationConsumed }: DashboardPr
             onClose={handleCloseSlideOver}
             onAddProject={handleAddProject}
             onEditProject={handleEditProject}
-            onCreateTask={handleCreateTask}
-            onLogOutreach={handleLogOutreach}
           />
         ) : mode === "editing" || mode === "creating" ? (
           <VenueDetail
@@ -163,20 +132,6 @@ export function Dashboard({ initialEntityId, onNavigationConsumed }: DashboardPr
             isCreating={mode === "creating-project"}
             defaultVenueId={selectedVenueId ?? undefined}
             onClose={handleCloseProjectDetail}
-          />
-        ) : mode === "creating-task" ? (
-          <TaskDetail
-            taskId={null}
-            isCreating
-            onClose={handleCloseTaskDetail}
-            initialVenueIds={selectedVenueId ? [selectedVenueId] : undefined}
-          />
-        ) : mode === "creating-outreach" ? (
-          <OutreachDetail
-            outreachId={null}
-            isCreating
-            onClose={handleCloseOutreachDetail}
-            initialVenueId={selectedVenueId ?? undefined}
           />
         ) : null}
       </SlideOver>

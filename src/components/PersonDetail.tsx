@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
-import { X, Save, Trash2, CheckSquare } from "lucide-react";
+import { X, Save, Trash2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import {
   useComboboxAnchor,
 } from "@/components/ui/combobox";
 import { PERSON_TYPES } from "@/lib/personTypes";
+import { createTrelloCard } from "@/lib/trello";
 
 interface PersonDetailProps {
   contactId: Id<"contacts"> | null;
@@ -29,8 +30,6 @@ interface PersonDetailProps {
   /** Pre-fill venue when creating from a venue view */
   defaultVenueId?: Id<"venues">;
   onClose: () => void;
-  /** Create a task pre-linked to this person */
-  onCreateTask?: (contactId: Id<"contacts">) => void;
 }
 
 export function PersonDetail({
@@ -38,7 +37,6 @@ export function PersonDetail({
   isCreating,
   defaultVenueId,
   onClose,
-  onCreateTask,
 }: PersonDetailProps) {
   const contact = useQuery(
     api.contacts.get,
@@ -66,6 +64,7 @@ export function PersonDetail({
     venueIds: [] as string[],
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [isCreatingCard, setIsCreatingCard] = useState(false);
   const [selectedProjectIds, setSelectedProjectIds] = useState<Id<"projects">[]>([]);
   const venuesAnchor = useComboboxAnchor();
   const typesAnchor = useComboboxAnchor();
@@ -166,6 +165,35 @@ export function PersonDetail({
     }
   };
 
+  const handleCreateTrelloCard = async () => {
+    if (!contact || !contactId || isCreatingCard) return;
+
+    setIsCreatingCard(true);
+    try {
+      const description = [
+        `Person: ${contact.name}`,
+        contact.email ? `Email: ${contact.email}` : "",
+        contact.role ? `Role: ${contact.role}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+      const result = await createTrelloCard(`Contact: ${contact.name}`, description);
+      toast.success("Trello card created successfully!", {
+        description: "Card added to Today list",
+        action: {
+          label: "View",
+          onClick: () => window.open(result.url, "_blank"),
+        },
+      });
+    } catch (error) {
+      console.error("Failed to create Trello card:", error);
+      toast.error("Failed to create Trello card");
+    } finally {
+      setIsCreatingCard(false);
+    }
+  };
+
   if (contact === undefined && !isCreating) {
     return (
       <div className="flex justify-center items-center h-full">
@@ -183,14 +211,15 @@ export function PersonDetail({
             {isCreating ? "New Person" : "Edit Person"}
           </h2>
           <div className="flex items-center gap-2">
-            {!isCreating && contactId && onCreateTask && (
+            {!isCreating && contactId && (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onCreateTask(contactId)}
+                onClick={handleCreateTrelloCard}
+                disabled={isCreatingCard}
               >
-                <CheckSquare className="h-4 w-4" />
-                Create Task
+                <ExternalLink className="h-4 w-4" />
+                {isCreatingCard ? "Creating..." : "Create Trello Card"}
               </Button>
             )}
             {!isCreating && (

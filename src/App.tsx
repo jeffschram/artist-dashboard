@@ -4,8 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Dashboard } from "./components/Dashboard";
 import { ProjectsDashboard } from "./components/ProjectsDashboard";
 import { PeopleDashboard } from "./components/PeopleDashboard";
-import { TasksDashboard } from "./components/TasksDashboard";
-import { OutreachDashboard } from "./components/OutreachDashboard";
 import { HomeDashboard } from "./components/HomeDashboard";
 import { GlobalSearch } from "./components/GlobalSearch";
 import { PasswordForm } from "./components/PasswordForm";
@@ -14,14 +12,13 @@ import {
   Building2,
   FolderKanban,
   Users,
-  CheckSquare,
-  Send,
   Home,
   Search,
+  ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type Tab = "home" | "venues" | "projects" | "people" | "tasks" | "outreach";
+type Tab = "home" | "venues" | "projects" | "people";
 
 interface NavItem {
   key: Tab;
@@ -34,9 +31,9 @@ const NAV_ITEMS: NavItem[] = [
   { key: "venues", label: "Venues", icon: <Building2 className="h-5 w-5" /> },
   { key: "projects", label: "Projects", icon: <FolderKanban className="h-5 w-5" /> },
   { key: "people", label: "People", icon: <Users className="h-5 w-5" /> },
-  { key: "tasks", label: "Tasks", icon: <CheckSquare className="h-5 w-5" /> },
-  { key: "outreach", label: "Outreach", icon: <Send className="h-5 w-5" /> },
 ];
+
+const TRELLO_BOARD_URL = import.meta.env.VITE_TRELLO_BOARD_URL;
 
 type NavigationTarget = {
   tab: Tab;
@@ -134,6 +131,19 @@ export default function App() {
                 </button>
               </li>
             ))}
+            
+            {/* Trello Board Link */}
+            <li>
+              <a
+                href={TRELLO_BOARD_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <ExternalLink className="h-5 w-5" />
+                Trello Board
+              </a>
+            </li>
           </ul>
         </nav>
 
@@ -195,26 +205,6 @@ export default function App() {
           <PeopleDashboard
             initialEntityId={
               pendingNavigation?.tab === "people"
-                ? pendingNavigation.entityId
-                : undefined
-            }
-            onNavigationConsumed={handleNavigationConsumed}
-          />
-        )}
-        {activeTab === "tasks" && (
-          <TasksDashboard
-            initialEntityId={
-              pendingNavigation?.tab === "tasks"
-                ? pendingNavigation.entityId
-                : undefined
-            }
-            onNavigationConsumed={handleNavigationConsumed}
-          />
-        )}
-        {activeTab === "outreach" && (
-          <OutreachDashboard
-            initialEntityId={
-              pendingNavigation?.tab === "outreach"
                 ? pendingNavigation.entityId
                 : undefined
             }

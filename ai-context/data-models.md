@@ -1,6 +1,10 @@
 # Data Models
 
-This document describes the five main data models in the Artist Dashboard application. All data is stored in Convex and defined in `convex/schema.ts`.
+This document describes the three main data models in the Artist Dashboard application. All data is stored in Convex and defined in `convex/schema.ts`.
+
+## Task Management
+
+Task and outreach management has been migrated to Trello. The application integrates with a Trello board (configurable via `.env.local`) where users can create cards directly from Venue, Project, and Person detail views.
 
 ---
 
@@ -106,69 +110,6 @@ People associated with the artist's work: venue contacts, colleagues, other arti
 
 - **Venues** — direct `venueIds` array on the person
 - **Projects** — many-to-many via `projectContacts` join table
-- **Tasks** — many-to-many via `taskContacts` join table
-
----
-
-## Tasks
-
-To-do items that can be linked to venues, projects, and/or people. Displayed as a Kanban board organized by status.
-
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `title` | `string` | Yes | Task title |
-| `description` | `string` | No | Brief description |
-| `status` | `enum` | Yes | One of: `"To Do"`, `"In Progress"`, `"Completed"`, `"Cancelled"` |
-| `priority` | `enum` | Yes | One of: `"Low"`, `"Medium"`, `"High"`, `"Urgent"` |
-| `dueDate` | `string` | No | ISO date string |
-| `completedDate` | `string` | No | ISO date string |
-| `notes` | `string` | No | Markdown notes |
-
-### Indexes
-
-- `by_status` — `[status]`
-- `by_due_date` — `[dueDate]`
-
-### Relationships (all many-to-many via join tables)
-
-| Join Table | Fields | Description |
-|---|---|---|
-| `taskVenues` | `taskId`, `venueId` | Links tasks to venues |
-| `taskProjects` | `taskId`, `projectId` | Links tasks to projects |
-| `taskContacts` | `taskId`, `contactId` | Links tasks to people |
-
-Each join table has indexes on both foreign keys (e.g. `by_task` and `by_venue`).
-
----
-
-## Outreach
-
-Communication logs tracking all outreach attempts and responses. Displayed as a Kanban board organized by status.
-
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `contactId` | `Id<contacts>` | No | Associated person |
-| `venueId` | `Id<venues>` | No | Associated venue |
-| `projectId` | `Id<projects>` | No | Associated project |
-| `method` | `enum` | Yes | One of: `"Email"`, `"Phone"`, `"In Person"`, `"Submission Form"`, `"Social Media"`, `"Other"` |
-| `direction` | `enum` | Yes | One of: `"Outbound"`, `"Inbound"` |
-| `date` | `string` | Yes | ISO date string |
-| `subject` | `string` | Yes | Subject or title of the outreach |
-| `status` | `enum` | Yes | One of: `"To Do"`, `"Sent"`, `"Awaiting Response"`, `"Responded"`, `"Follow Up Needed"`, `"No Response"`, `"Declined"`, `"Accepted"` |
-| `notes` | `string` | No | Additional notes or details |
-| `followUpDate` | `string` | No | ISO date string for scheduled follow-up |
-
-### Indexes
-
-- `by_venue` — `[venueId]`
-- `by_contact` — `[contactId]`
-- `by_date` — `[date]`
-- `by_status` — `[status]`
-- `by_follow_up_date` — `[followUpDate]`
-
-### Status Flow
-
-The "To Do" status is used for planned outreach that hasn't been sent yet. This acts as a reminder or todo list for initial outreach.
 
 ---
 
