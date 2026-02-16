@@ -177,7 +177,7 @@ export function VenueView({
 
       const result = await createTrelloCard(`Review: ${venue.name}`, description);
       toast.success("Trello card created successfully!", {
-        description: "Card added to Today list",
+        description: "Card added to TODAY'S INTENTIONS",
         action: {
           label: "View",
           onClick: () => window.open(result.url, "_blank"),
