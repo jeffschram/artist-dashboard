@@ -42,8 +42,6 @@ export function GlobalSearch({
   const venues = useQuery(api.venues.list);
   const projects = useQuery(api.projects.list);
   const contacts = useQuery(api.contacts.list);
-  const tasks = useQuery(api.tasks.list);
-  const outreach = useQuery(api.outreach.list);
 
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -108,34 +106,6 @@ export function GlobalSearch({
         context: c.role || (c.types || []).join(", ") || undefined,
       }));
 
-    const taskResults: SearchResult[] = (tasks ?? [])
-      .filter(
-        (t) =>
-          t.title.toLowerCase().includes(q) ||
-          (t.description || "").toLowerCase().includes(q),
-      )
-      .slice(0, maxPerType)
-      .map((t) => ({
-        type: "tasks" as Tab,
-        id: t._id,
-        name: t.title,
-        context: `${t.status} · ${t.priority}`,
-      }));
-
-    const outreachResults: SearchResult[] = (outreach ?? [])
-      .filter(
-        (o) =>
-          o.subject.toLowerCase().includes(q) ||
-          (o.notes || "").toLowerCase().includes(q),
-      )
-      .slice(0, maxPerType)
-      .map((o) => ({
-        type: "outreach" as Tab,
-        id: o._id,
-        name: o.subject,
-        context: `${o.date} · ${o.status}`,
-      }));
-
     return [
       {
         label: "Venues",
@@ -152,18 +122,8 @@ export function GlobalSearch({
         icon: <Users className="h-4 w-4" />,
         items: contactResults,
       },
-      {
-        label: "Tasks",
-        icon: <CheckSquare className="h-4 w-4" />,
-        items: taskResults,
-      },
-      {
-        label: "Outreach",
-        icon: <Send className="h-4 w-4" />,
-        items: outreachResults,
-      },
     ].filter((g) => g.items.length > 0);
-  }, [query, venues, projects, contacts, tasks, outreach]);
+  }, [query, venues, projects, contacts]);
 
   // Flatten results for keyboard navigation
   const flatResults = useMemo(

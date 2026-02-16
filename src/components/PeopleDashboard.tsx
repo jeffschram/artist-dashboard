@@ -4,7 +4,6 @@ import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { SlideOver } from "./SlideOver";
 import { PersonDetail } from "./PersonDetail";
-import { TaskDetail } from "./TaskDetail";
 import { PeopleTable } from "./PeopleTable";
 import { Plus, Search, Mail, Phone, Building2, UserCircle, LayoutGrid, Table as TableIcon, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { PERSON_TYPES, getPersonTypeBadgeClass } from "@/lib/personTypes";
 import { cn } from "@/lib/utils";
 
-type Mode = "idle" | "editing" | "creating" | "creating-task";
+type Mode = "idle" | "editing" | "creating";
 type ViewMode = "cards" | "table";
 
 interface PeopleDashboardProps {
@@ -107,20 +106,6 @@ export function PeopleDashboard({ initialEntityId, onNavigationConsumed }: Peopl
   const handleClose = () => {
     setSelectedContactId(null);
     setMode("idle");
-  };
-
-  const handleCreateTask = (contactId: Id<"contacts">) => {
-    setSelectedContactId(contactId);
-    setMode("creating-task");
-  };
-
-  const handleCloseTaskDetail = () => {
-    // Return to person edit view
-    if (selectedContactId) {
-      setMode("editing");
-    } else {
-      setMode("idle");
-    }
   };
 
   return (
@@ -311,21 +296,11 @@ export function PeopleDashboard({ initialEntityId, onNavigationConsumed }: Peopl
 
       {/* Slide-over */}
       <SlideOver isOpen={mode !== "idle"} onClose={handleClose}>
-        {mode === "creating-task" ? (
-          <TaskDetail
-            taskId={null}
-            isCreating
-            onClose={handleCloseTaskDetail}
-            initialContactIds={selectedContactId ? [selectedContactId] : undefined}
-          />
-        ) : (
-          <PersonDetail
-            contactId={selectedContactId}
-            isCreating={mode === "creating"}
-            onClose={handleClose}
-            onCreateTask={handleCreateTask}
-          />
-        )}
+        <PersonDetail
+          contactId={selectedContactId}
+          isCreating={mode === "creating"}
+          onClose={handleClose}
+        />
       </SlideOver>
     </div>
   );

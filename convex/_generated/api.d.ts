@@ -14,12 +14,10 @@ import type * as contacts from "../contacts.js";
 import type * as dashboard from "../dashboard.js";
 import type * as http from "../http.js";
 import type * as migrations from "../migrations.js";
-import type * as outreach from "../outreach.js";
 import type * as projects from "../projects.js";
 import type * as router from "../router.js";
 import type * as seedVenuesData from "../seedVenuesData.js";
 import type * as simpleAuth from "../simpleAuth.js";
-import type * as tasks from "../tasks.js";
 import type * as venues from "../venues.js";
 
 import type {
@@ -35,12 +33,10 @@ declare const fullApi: ApiFromModules<{
   dashboard: typeof dashboard;
   http: typeof http;
   migrations: typeof migrations;
-  outreach: typeof outreach;
   projects: typeof projects;
   router: typeof router;
   seedVenuesData: typeof seedVenuesData;
   simpleAuth: typeof simpleAuth;
-  tasks: typeof tasks;
   venues: typeof venues;
 }>;
 
