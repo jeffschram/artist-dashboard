@@ -23,9 +23,10 @@ interface VenueListPrintProps {
   onVenueSelect: (venueId: Id<"venues">) => void;
 }
 
-const CATEGORY_ORDER = ["Ultimate Dream Goal", "Accessible", "Unconventional"];
+const CATEGORY_ORDER = ["For Review", "Ultimate Dream Goal", "Accessible", "Unconventional"];
 
 const CATEGORY_STYLE: Record<string, { bg: string; text: string; border: string }> = {
+  "For Review": { bg: "bg-amber-50", text: "text-amber-800", border: "border-amber-200" },
   "Ultimate Dream Goal": { bg: "bg-purple-50", text: "text-purple-800", border: "border-purple-200" },
   "Accessible": { bg: "bg-blue-50", text: "text-blue-800", border: "border-blue-200" },
   "Unconventional": { bg: "bg-orange-50", text: "text-orange-800", border: "border-orange-200" },

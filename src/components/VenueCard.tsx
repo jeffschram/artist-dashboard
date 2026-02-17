@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 type Status = "Contacted" | "To Contact" | "Ignore" | "Previous Client";
-type Category = "Ultimate Dream Goal" | "Accessible" | "Unconventional";
+type Category = "Ultimate Dream Goal" | "Accessible" | "Unconventional" | "For Review";
 
 export interface VenueData {
   _id: Id<"venues">;
@@ -46,6 +46,7 @@ function getCategoryBadgeClass(category: Category) {
     case "Ultimate Dream Goal": return "bg-purple-100 text-purple-800 hover:bg-purple-100";
     case "Accessible": return "bg-blue-100 text-blue-800 hover:bg-blue-100";
     case "Unconventional": return "bg-orange-100 text-orange-800 hover:bg-orange-100";
+    case "For Review": return "bg-amber-100 text-amber-800 hover:bg-amber-100";
   }
 }
 
@@ -55,6 +56,7 @@ function getAccentBorder(groupBy: "category" | "status", venue: VenueData) {
       case "Ultimate Dream Goal": return "border-l-purple-400";
       case "Accessible": return "border-l-blue-400";
       case "Unconventional": return "border-l-orange-400";
+      case "For Review": return "border-l-amber-400";
     }
   } else {
     switch (venue.status) {

@@ -7,6 +7,7 @@ import { PeopleDashboard } from "./components/PeopleDashboard";
 import { HomeDashboard } from "./components/HomeDashboard";
 import { GlobalSearch } from "./components/GlobalSearch";
 import { PasswordForm } from "./components/PasswordForm";
+import { VenueScoutDialog } from "./components/VenueScoutDialog";
 import {
   LogOut,
   Building2,
@@ -15,6 +16,7 @@ import {
   Home,
   Search,
   ExternalLink,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -47,6 +49,7 @@ export default function App() {
   const [pendingNavigation, setPendingNavigation] =
     useState<NavigationTarget>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isScoutOpen, setIsScoutOpen] = useState(false);
 
   useEffect(() => {
     const authStatus = localStorage.getItem("artistDashboardAuth");
@@ -144,6 +147,17 @@ export default function App() {
                 Trello Board
               </a>
             </li>
+
+            {/* Venue Scout */}
+            <li>
+              <button
+                onClick={() => setIsScoutOpen(true)}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <Sparkles className="h-5 w-5" />
+                Scout Venues
+              </button>
+            </li>
           </ul>
         </nav>
 
@@ -220,6 +234,7 @@ export default function App() {
         onNavigateToEntity={handleNavigateToEntity}
       />
 
+      <VenueScoutDialog open={isScoutOpen} onOpenChange={setIsScoutOpen} />
       <Toaster />
     </div>
   );

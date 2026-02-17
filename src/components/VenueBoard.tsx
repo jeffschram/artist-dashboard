@@ -18,20 +18,22 @@ import { VenueCard, VenueData } from "./VenueCard";
 import { VenueMap } from "./VenueMap";
 import { VenueListPrint } from "./VenueListPrint";
 import { VenueTable } from "./VenueTable";
-import { Search, Plus, LayoutGrid, Map, List, Columns3, Table as TableIcon } from "lucide-react";
+import { Search, Plus, LayoutGrid, Map, List, Columns3, Table as TableIcon, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { VenueScoutDialog } from "./VenueScoutDialog";
 
 type GroupBy = "category" | "status";
 type ViewMode = "kanban" | "map" | "list" | "table";
 
 const CATEGORY_COLUMNS: {
-  key: "Ultimate Dream Goal" | "Accessible" | "Unconventional";
+  key: "Ultimate Dream Goal" | "Accessible" | "Unconventional" | "For Review";
   title: string;
   accent: string;
 }[] = [
+  { key: "For Review", title: "For Review", accent: "bg-amber-500" },
   { key: "Ultimate Dream Goal", title: "Ultimate Dream Goal", accent: "bg-purple-500" },
   { key: "Accessible", title: "Accessible", accent: "bg-blue-500" },
   { key: "Unconventional", title: "Unconventional", accent: "bg-orange-500" },
@@ -65,6 +67,7 @@ export function VenueBoard({
   const [groupBy, setGroupBy] = useState<GroupBy>("category");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeId, setActiveId] = useState<Id<"venues"> | null>(null);
+  const [scoutDialogOpen, setScoutDialogOpen] = useState(false);
   const [columnOverride, setColumnOverride] = useState<{
     venueId: Id<"venues">;
     column: string;
@@ -299,11 +302,21 @@ export function VenueBoard({
           {filteredVenues.length} venue{filteredVenues.length !== 1 ? "s" : ""}
         </span>
 
-        {/* Add button */}
-        <Button onClick={onCreateNew} size="sm" className="ml-auto">
-          <Plus className="h-4 w-4" />
-          Add Venue
-        </Button>
+        {/* Action buttons */}
+        <div className="ml-auto flex items-center gap-2">
+          <Button
+            onClick={() => setScoutDialogOpen(true)}
+            size="sm"
+            variant="outline"
+          >
+            <Sparkles className="h-4 w-4" />
+            Scout Venues
+          </Button>
+          <Button onClick={onCreateNew} size="sm">
+            <Plus className="h-4 w-4" />
+            Add Venue
+          </Button>
+        </div>
       </div>
 
       {/* Content — switch on viewMode */}
@@ -367,6 +380,11 @@ export function VenueBoard({
           <VenueTable venues={filteredVenues} onVenueSelect={onVenueSelect} />
         </div>
       )}
+
+      <VenueScoutDialog
+        open={scoutDialogOpen}
+        onOpenChange={setScoutDialogOpen}
+      />
     </div>
   );
 }

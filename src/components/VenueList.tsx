@@ -12,7 +12,7 @@ interface Venue {
   name: string;
   url?: string;
   status: "Contacted" | "To Contact" | "Ignore" | "Previous Client";
-  category: "Ultimate Dream Goal" | "Accessible" | "Unconventional";
+  category: "Ultimate Dream Goal" | "Accessible" | "Unconventional" | "For Review";
   orderNum: number;
 }
 
@@ -28,6 +28,7 @@ function getCategoryBadgeClass(category: string) {
     case "Ultimate Dream Goal": return "bg-purple-100 text-purple-800 hover:bg-purple-100";
     case "Accessible": return "bg-blue-100 text-blue-800 hover:bg-blue-100";
     case "Unconventional": return "bg-orange-100 text-orange-800 hover:bg-orange-100";
+    case "For Review": return "bg-amber-100 text-amber-800 hover:bg-amber-100";
     default: return "bg-gray-100 text-gray-800 hover:bg-gray-100";
   }
 }
