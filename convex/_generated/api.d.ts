@@ -18,6 +18,8 @@ import type * as projects from "../projects.js";
 import type * as router from "../router.js";
 import type * as seedVenuesData from "../seedVenuesData.js";
 import type * as simpleAuth from "../simpleAuth.js";
+import type * as venueScout from "../venueScout.js";
+import type * as venueScoutHelpers from "../venueScoutHelpers.js";
 import type * as venues from "../venues.js";
 
 import type {
@@ -37,6 +39,8 @@ declare const fullApi: ApiFromModules<{
   router: typeof router;
   seedVenuesData: typeof seedVenuesData;
   simpleAuth: typeof simpleAuth;
+  venueScout: typeof venueScout;
+  venueScoutHelpers: typeof venueScoutHelpers;
   venues: typeof venues;
 }>;
 

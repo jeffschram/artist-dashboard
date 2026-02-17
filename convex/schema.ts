@@ -33,6 +33,7 @@ const applicationTables = {
       v.literal("Ultimate Dream Goal"),
       v.literal("Accessible"),
       v.literal("Unconventional"),
+      v.literal("For Review"),
     ),
     notes: v.optional(v.string()),
   })

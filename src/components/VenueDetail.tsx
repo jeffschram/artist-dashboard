@@ -69,7 +69,7 @@ export function VenueDetail({ venueId, isCreating, onClose }: VenueDetailProps) 
     submissionFormUrl: "",
     locations: [{ city: "", state: "", country: "", phoneNumber: "" }] as Location[],
     status: "To Contact" as "Contacted" | "To Contact" | "Ignore" | "Previous Client",
-    category: "Accessible" as "Ultimate Dream Goal" | "Accessible" | "Unconventional",
+    category: "Accessible" as "Ultimate Dream Goal" | "Accessible" | "Unconventional" | "For Review",
     notes: "",
   });
 
@@ -454,6 +454,7 @@ export function VenueDetail({ venueId, isCreating, onClose }: VenueDetailProps) 
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="For Review">For Review</SelectItem>
                     <SelectItem value="Accessible">Accessible</SelectItem>
                     <SelectItem value="Ultimate Dream Goal">Ultimate Dream Goal</SelectItem>
                     <SelectItem value="Unconventional">Unconventional</SelectItem>

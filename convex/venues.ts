@@ -45,7 +45,7 @@ export const create = mutation({
     // New relational contact IDs
     contactIds: v.optional(v.array(v.id("contacts"))),
     status: v.union(v.literal("Contacted"), v.literal("To Contact"), v.literal("Ignore"), v.literal("Previous Client")),
-    category: v.union(v.literal("Ultimate Dream Goal"), v.literal("Accessible"), v.literal("Unconventional")),
+    category: v.union(v.literal("Ultimate Dream Goal"), v.literal("Accessible"), v.literal("Unconventional"), v.literal("For Review")),
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -93,7 +93,7 @@ export const update = mutation({
     // New relational contact IDs
     contactIds: v.optional(v.array(v.id("contacts"))),
     status: v.union(v.literal("Contacted"), v.literal("To Contact"), v.literal("Ignore"), v.literal("Previous Client")),
-    category: v.union(v.literal("Ultimate Dream Goal"), v.literal("Accessible"), v.literal("Unconventional")),
+    category: v.union(v.literal("Ultimate Dream Goal"), v.literal("Accessible"), v.literal("Unconventional"), v.literal("For Review")),
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
